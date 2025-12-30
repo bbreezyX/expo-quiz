@@ -39,10 +39,10 @@ export default function JoinPage() {
   return (
     <div className="min-h-screen p-6 flex justify-center items-center">
       <div className="w-full max-w-lg">
-        <Card>
-          <CardContent className="p-6 space-y-4">
-            <div className="text-center space-y-2">
-              <Badge className="bg-white/70 text-foreground border-white/60">Peserta</Badge>
+        <Card className="sticker">
+          <CardContent className="p-6 space-y-5">
+            <div className="text-center space-y-3">
+              <Badge className="bg-white text-foreground border-white sticker">Peserta</Badge>
               <h1 className="font-display text-3xl">Masuk Quiz</h1>
               <div className="text-sm text-muted-foreground">Sesi: {code}</div>
             </div>
@@ -54,6 +54,15 @@ export default function JoinPage() {
                 onChange={(e) => setName(e.target.value)}
               />
               {err && <div className="text-sm text-red-600">{err}</div>}
+            </div>
+
+            <div className="grid gap-2 sm:grid-cols-2">
+              <div className="rounded-2xl bg-[var(--brand-green)] px-4 py-3 text-xs font-semibold text-white">
+                Dapatkan poin tertinggi
+              </div>
+              <div className="rounded-2xl bg-[var(--brand-red)] px-4 py-3 text-xs font-semibold text-white">
+                Jawab secepat mungkin
+              </div>
             </div>
 
             <Button className="w-full" onClick={join} disabled={name.trim().length < 2 || loading}>

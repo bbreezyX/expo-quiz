@@ -14,9 +14,9 @@ export default function QuizDonePage() {
 
   return (
     <main className="min-h-screen flex items-center justify-center p-6">
-      <Card className="w-full max-w-lg">
+      <Card className="w-full max-w-lg sticker">
         <CardContent className="p-6 space-y-4 text-center">
-          <Badge className="bg-white/70 text-foreground border-white/60">Selesai</Badge>
+          <Badge className="bg-white text-foreground border-white sticker">Selesai</Badge>
           <h1 className="font-display text-3xl">Quiz sudah selesai</h1>
           <p className="text-sm text-muted-foreground">
             Terima kasih sudah ikut. Kamu bisa lihat leaderboard atau kembali ke home.

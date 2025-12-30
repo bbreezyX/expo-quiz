@@ -14,53 +14,53 @@ export default function HomePage() {
   }
 
   return (
-    <main className="min-h-screen px-6 py-12">
-      <div className="mx-auto grid w-full max-w-6xl items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="space-y-6">
-          <Badge className="bg-white/70 text-foreground border-white/60">
-            Pengalaman quiz live
+    <main className="min-h-screen px-5 py-10 sm:px-8">
+      <div className="mx-auto grid w-full max-w-6xl items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="order-2 space-y-7 lg:order-1">
+          <Badge className="bg-white text-foreground border-white sticker">
+            Gaya Kahoot buat event kamu
           </Badge>
-          <div className="space-y-3">
+          <div className="space-y-4">
             <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl text-glow">
               Expo Quiz
             </h1>
             <p className="text-lg text-muted-foreground max-w-xl">
-              Buat sesi quiz interaktif untuk event, kelas, atau pameran.
-              Peserta cukup scan QR dan jawab dari HP.
+              Sesi quiz super seru untuk acara, kelas, dan booth pameran.
+              Semua peserta main dari HP, hasilnya muncul live di layar besar.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <Button asChild>
-              <Link href="/admin">Masuk Admin</Link>
+            <Button asChild size="lg">
+              <Link href="/admin">Mulai dari Admin</Link>
             </Button>
-            <Button variant="outline" asChild>
-              <Link href="/join">Masuk Peserta</Link>
+            <Button variant="outline" asChild size="lg">
+              <Link href="/join">Ikut sebagai Peserta</Link>
             </Button>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             {[
-              "Realtime leaderboard untuk layar besar",
-              "Jawaban langsung direkap otomatis",
-              "Bisa dipakai dari HP peserta",
-              "Siap untuk event singkat atau demo",
+              { text: "Leaderboard live di layar besar", tone: "bg-[var(--brand-blue)] text-white" },
+              { text: "Input cepat dari HP peserta", tone: "bg-[var(--brand-green)] text-white" },
+              { text: "Setup admin yang simpel", tone: "bg-[var(--brand-yellow)] text-[#1f2937]" },
+              { text: "Cocok untuk demo cepat", tone: "bg-[var(--brand-red)] text-white" },
             ].map((item) => (
               <div
-                key={item}
-                className="rounded-xl border border-white/60 bg-white/70 px-4 py-3 text-sm shadow-sm backdrop-blur-md"
+                key={item.text}
+                className={`rounded-2xl px-4 py-4 text-sm font-semibold shadow-[0_16px_30px_-22px_rgba(15,23,42,0.5)] ${item.tone}`}
               >
-                {item}
+                {item.text}
               </div>
             ))}
           </div>
         </div>
 
-        <Card className="w-full">
-          <CardContent className="p-6 space-y-4">
+        <Card className="order-1 w-full sticker lg:order-2">
+          <CardContent className="p-6 space-y-5">
             <div className="space-y-2">
               <div className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
                 Masuk Sesi
               </div>
-              <h2 className="font-display text-2xl">Masuk dengan kode</h2>
+              <h2 className="font-display text-2xl">Gabung dengan kode</h2>
               <p className="text-sm text-muted-foreground">
                 Scan QR atau ketik kode sesi dari admin.
               </p>
@@ -78,7 +78,16 @@ export default function HomePage() {
               </Button>
             </form>
 
-            <div className="pt-4 border-t border-white/60 text-xs text-muted-foreground">
+            <div className="grid gap-2 sm:grid-cols-2">
+              <div className="rounded-2xl border-2 border-white bg-white px-4 py-3 text-xs font-semibold">
+                Scan QR di layar admin
+              </div>
+              <div className="rounded-2xl border-2 border-white bg-white px-4 py-3 text-xs font-semibold">
+                Main tanpa install aplikasi
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-white text-xs text-muted-foreground">
               (c) 2025 - Quiz Pameran
             </div>
           </CardContent>

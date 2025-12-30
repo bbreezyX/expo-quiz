@@ -85,13 +85,13 @@ export default function ScreenPage() {
 
   return (
     <div className="min-h-screen p-6">
-      <div className="max-w-4xl mx-auto space-y-4">
+      <div className="max-w-5xl mx-auto space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-1">
-            <Badge className="bg-white/70 text-foreground border-white/60">
+            <Badge className="bg-white text-foreground border-white sticker">
               {endedAt ? "Selesai" : "Live"}
             </Badge>
-            <h1 className="font-display text-3xl">Leaderboard - {code}</h1>
+            <h1 className="font-display text-3xl sm:text-4xl">Leaderboard - {code}</h1>
           </div>
           {sessionId && (
             <Button variant="outline" onClick={() => fetchBoard(sessionId)}>
@@ -100,16 +100,16 @@ export default function ScreenPage() {
           )}
         </div>
 
-        <Card>
+        <Card className="sticker">
           <CardContent className="p-4">
-            <div className="grid grid-cols-12 gap-2 text-sm font-semibold border-b border-white/60 pb-2">
+            <div className="grid grid-cols-12 gap-2 text-sm font-semibold border-b-2 border-white pb-2">
               <div className="col-span-1">#</div>
               <div className="col-span-7">Nama</div>
               <div className="col-span-2 text-right">Poin</div>
               <div className="col-span-2 text-right">Benar</div>
             </div>
 
-            <div className="divide-y">
+            <div className="space-y-2">
               {loading && (
                 <div className="py-6 text-sm text-muted-foreground">Memuat leaderboard...</div>
               )}
@@ -118,10 +118,18 @@ export default function ScreenPage() {
               )}
               {!loading && !error && rows.map((r, i) => {
                 const isTop = i < 3;
+                const highlight =
+                  i === 0
+                    ? "bg-[var(--brand-yellow)] text-[#1f2937]"
+                    : i === 1
+                    ? "bg-[var(--brand-blue)] text-white"
+                    : i === 2
+                    ? "bg-[var(--brand-red)] text-white"
+                    : "bg-white/60";
                 return (
                   <div
                     key={r.participant_id}
-                    className={`grid grid-cols-12 gap-2 py-2 ${isTop ? "font-semibold bg-white/70 rounded-lg px-2" : ""}`}
+                    className={`grid grid-cols-12 gap-2 py-3 rounded-2xl px-3 my-2 ${highlight} ${isTop ? "font-semibold" : ""}`}
                   >
                     <div className="col-span-1">{i + 1}</div>
                     <div className="col-span-7">{r.display_name}</div>

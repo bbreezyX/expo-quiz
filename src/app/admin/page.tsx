@@ -245,7 +245,7 @@ export default function AdminPage() {
     <main className="min-h-screen px-6 py-10">
       <div className="mx-auto max-w-6xl space-y-8">
         <header className="text-center space-y-3">
-          <Badge className="bg-white/70 text-foreground border-white/60">Admin</Badge>
+          <Badge className="bg-white text-foreground border-white sticker">Admin</Badge>
           <h1 className="font-display text-4xl sm:text-5xl">Pusat Kontrol Expo Quiz</h1>
           <p className="text-muted-foreground">
             Buat sesi, bagikan kode, dan susun pertanyaan untuk peserta.
@@ -253,7 +253,7 @@ export default function AdminPage() {
         </header>
 
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-          <Card>
+          <Card className="sticker">
             <CardContent className="p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
@@ -262,13 +262,13 @@ export default function AdminPage() {
                   </div>
                   <h2 className="font-display text-2xl">Buat atau muat sesi</h2>
                 </div>
-                <Badge className="bg-white/70 text-foreground border-white/60">
+                <Badge className="bg-white text-foreground border-white sticker">
                   {code ? (endedAt ? "Selesai" : "Aktif") : "Belum ada"}
                 </Badge>
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row">
-                <Button onClick={createSession} disabled={busy}>
+                <Button onClick={createSession} disabled={busy} size="lg">
                   Buat Sesi
                 </Button>
                 <div className="flex flex-1 gap-2">
@@ -278,14 +278,14 @@ export default function AdminPage() {
                     placeholder="Masukkan kode sesi"
                     className="uppercase"
                   />
-                  <Button variant="outline" onClick={loadSession} disabled={busy}>
+                  <Button variant="outline" onClick={loadSession} disabled={busy} size="lg">
                     Muat
                   </Button>
                 </div>
               </div>
 
               {code && (
-                <div className="space-y-3 rounded-xl border border-white/60 bg-white/60 p-4 text-sm">
+                <div className="space-y-3 rounded-2xl border-2 border-white bg-white p-4 text-sm">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
                       Kode: <span className="font-mono font-semibold">{code}</span>
@@ -325,11 +325,11 @@ export default function AdminPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="sticker">
             <CardContent className="p-6 space-y-4">
               <div className="space-y-1">
                 <div className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-                  Questions
+                  Pertanyaan
                 </div>
                 <h2 className="font-display text-2xl">Tambah pertanyaan</h2>
               </div>
@@ -344,7 +344,7 @@ export default function AdminPage() {
                 onChange={(e) => setQuestionText(e.target.value)}
                 placeholder="Tulis pertanyaan di sini..."
                 disabled={busy || !code || !!endedAt}
-                className="min-h-[120px] w-full rounded-lg border border-white/60 bg-white/70 px-3 py-2 text-sm shadow-sm backdrop-blur-md outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+                className="min-h-[140px] w-full rounded-2xl border-2 border-white bg-white px-4 py-3 text-sm shadow-[0_14px_26px_-18px_rgba(15,23,42,0.5)] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
               />
 
               <div className="grid gap-3 sm:grid-cols-2">
@@ -368,7 +368,7 @@ export default function AdminPage() {
                     value={String(correctIndex)}
                     onChange={(e) => setCorrectIndex(Number(e.target.value))}
                     disabled={busy || !code || !!endedAt}
-                    className="h-10 w-full rounded-lg border border-white/60 bg-white/70 px-3 text-sm shadow-sm backdrop-blur-md outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+                    className="h-12 w-full rounded-2xl border-2 border-white bg-white px-3 text-sm shadow-[0_14px_26px_-18px_rgba(15,23,42,0.5)] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                   >
                     {options.map((_, i) => (
                       <option key={i} value={i}>
@@ -399,7 +399,7 @@ export default function AdminPage() {
           </Card>
         </div>
 
-        <Card>
+        <Card className="sticker">
           <CardContent className="p-6 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="space-y-1">
@@ -417,7 +417,7 @@ export default function AdminPage() {
               {sessions.map((s) => (
                 <div
                   key={s.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/60 bg-white/70 px-4 py-3 text-sm"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-white bg-white px-4 py-3 text-sm"
                 >
                   <div className="space-y-1">
                     <div className="font-semibold">{s.title}</div>
@@ -451,7 +451,7 @@ export default function AdminPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="sticker">
           <CardContent className="p-6 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="space-y-1">
@@ -477,21 +477,30 @@ export default function AdminPage() {
                   </div>
                   <div className="mt-2 text-lg font-semibold">{q.question}</div>
                   <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                    {q.options.map((opt, i) => (
-                      <div
-                        key={`${q.id}-${i}`}
-                        className={`rounded-lg border px-3 py-2 text-sm ${
-                          i === q.correct_index
-                            ? "border-foreground/40 bg-white"
-                            : "border-white/60 bg-white/60"
-                        }`}
-                      >
-                        <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                          Opsi {i + 1}
+                    {q.options.map((opt, i) => {
+                      const palette = [
+                        "bg-[var(--brand-red)] text-white",
+                        "bg-[var(--brand-blue)] text-white",
+                        "bg-[var(--brand-yellow)] text-[#1f2937]",
+                        "bg-[var(--brand-green)] text-white",
+                      ];
+                      const paletteIndex = i % palette.length;
+                      const tone = palette[paletteIndex];
+                      const labelTone = paletteIndex === 2 ? "text-[#1f2937]/70" : "text-white/80";
+                      return (
+                        <div
+                          key={`${q.id}-${i}`}
+                          className={`rounded-2xl px-3 py-3 text-sm ${tone} ${
+                            i === q.correct_index ? "ring-4 ring-white/80" : ""
+                          }`}
+                        >
+                          <div className={`text-[10px] uppercase tracking-[0.2em] ${labelTone}`}>
+                            Opsi {i + 1}
+                          </div>
+                          <div className="font-medium">{opt}</div>
                         </div>
-                        <div className="font-medium">{opt}</div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               ))}

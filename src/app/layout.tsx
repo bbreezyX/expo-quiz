@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Fraunces, JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import { Bungee, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -7,9 +7,10 @@ const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
 });
 
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
+const bungee = Bungee({
+  variable: "--font-bungee",
   subsets: ["latin"],
+  weight: "400",
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -30,13 +31,14 @@ export default function RootLayout({
   return (
     <html lang="id">
       <body
-        className={`${spaceGrotesk.variable} ${fraunces.variable} ${jetbrainsMono.variable} antialiased`}
+        className={`${spaceGrotesk.variable} ${bungee.variable} ${jetbrainsMono.variable} antialiased`}
       >
         <div className="relative min-h-screen overflow-hidden">
           <div className="pointer-events-none absolute inset-0">
-            <div className="absolute -top-32 -left-24 size-[420px] rounded-full bg-[radial-gradient(circle_at_30%_30%,rgba(255,186,120,0.7),transparent_60%)] blur-3xl animate-float" />
-            <div className="absolute top-24 -right-20 size-[360px] rounded-full bg-[radial-gradient(circle_at_30%_30%,rgba(120,214,255,0.7),transparent_60%)] blur-3xl animate-float-slow" />
-            <div className="absolute -bottom-32 left-1/4 size-[320px] rounded-full bg-[radial-gradient(circle_at_30%_30%,rgba(255,236,180,0.8),transparent_60%)] blur-3xl animate-float-slower" />
+            <div className="absolute -top-28 -left-24 size-[420px] rounded-full bg-[radial-gradient(circle_at_30%_30%,rgba(255,94,98,0.65),transparent_60%)] blur-3xl animate-float" />
+            <div className="absolute top-16 -right-24 size-[360px] rounded-full bg-[radial-gradient(circle_at_30%_30%,rgba(47,128,237,0.55),transparent_60%)] blur-3xl animate-float-slow" />
+            <div className="absolute -bottom-28 left-1/3 size-[320px] rounded-full bg-[radial-gradient(circle_at_30%_30%,rgba(255,201,76,0.6),transparent_60%)] blur-3xl animate-float-slower" />
+            <div className="absolute bottom-10 left-8 h-28 w-44 rotate-6 rounded-[48px] bg-[linear-gradient(135deg,rgba(39,174,96,0.35),rgba(255,159,28,0.45))] blur-2xl" />
           </div>
           <div className="relative z-10">{children}</div>
         </div>

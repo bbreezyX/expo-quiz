@@ -15,6 +15,13 @@ type Question = {
   points: number;
 };
 
+const optionStyles = [
+  "bg-[var(--brand-red)] text-white",
+  "bg-[var(--brand-blue)] text-white",
+  "bg-[var(--brand-yellow)] text-[#1f2937]",
+  "bg-[var(--brand-green)] text-white",
+];
+
 export default function QuizPage() {
   const params = useParams();
   const rawCode = params?.code;
@@ -69,7 +76,7 @@ export default function QuizPage() {
       setLoading(false);
     }
     load();
-  }, [code]);
+  }, [code, router]);
 
   const q = questions[idx];
   const total = questions.length;
@@ -118,7 +125,7 @@ export default function QuizPage() {
   if (error) {
     return (
       <div className="min-h-screen p-6 flex justify-center items-center">
-        <Card className="w-full max-w-lg">
+        <Card className="w-full max-w-lg sticker">
           <CardContent className="p-6 space-y-4 text-center">
             <h1 className="font-display text-3xl">Maaf</h1>
             <p className="text-sm text-muted-foreground">{error}</p>
@@ -132,7 +139,7 @@ export default function QuizPage() {
   if (!q) {
     return (
       <div className="min-h-screen p-6 flex justify-center items-center">
-        <Card className="w-full max-w-lg">
+        <Card className="w-full max-w-lg sticker">
           <CardContent className="p-6 space-y-4 text-center">
             <h1 className="font-display text-3xl">Belum ada pertanyaan</h1>
             <p className="text-sm text-muted-foreground">
@@ -149,45 +156,49 @@ export default function QuizPage() {
 
   return (
     <div className="min-h-screen p-6 flex justify-center">
-      <div className="w-full max-w-2xl space-y-6">
+      <div className="w-full max-w-3xl space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
-          <Badge className="bg-white/70 text-foreground border-white/60">Sesi {code}</Badge>
+          <Badge className="bg-white text-foreground border-white sticker">Sesi {code}</Badge>
           <div>
             {idx + 1} / {total}
           </div>
         </div>
 
-        <div className="h-2 w-full rounded-full bg-white/60">
+        <div className="h-3 w-full rounded-full bg-white/70 border-2 border-white">
           <div
-            className="h-full rounded-full bg-[linear-gradient(135deg,var(--brand-start),var(--brand-end))]"
+            className="h-full rounded-full bg-[linear-gradient(135deg,var(--brand-blue),var(--brand-green))]"
             style={{ width: `${Math.round(((idx + 1) / total) * 100)}%` }}
           />
         </div>
 
-        <Card>
-          <CardContent className="p-6 space-y-4">
+        <Card className="sticker">
+          <CardContent className="p-6 space-y-5">
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-2">
                 <div className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
                   Pertanyaan {idx + 1}
                 </div>
-                <div className="text-2xl font-semibold">{q.question}</div>
+                <div className="text-2xl sm:text-3xl font-semibold">{q.question}</div>
               </div>
               <div className="text-sm text-muted-foreground">Poin {q.points}</div>
             </div>
 
-            <div className="grid gap-3">
-              {q.options.map((opt, i) => (
-                <Button
-                  key={i}
-                  variant={picked === i ? "default" : "outline"}
-                  className="w-full justify-start whitespace-normal h-auto px-4 py-4 text-left"
-                  onClick={() => setPicked(i)}
-                  disabled={submitting}
-                >
-                  {opt}
-                </Button>
-              ))}
+            <div className="grid gap-4 sm:grid-cols-2">
+              {q.options.map((opt, i) => {
+                const tone = optionStyles[i % optionStyles.length];
+                const isPicked = picked === i;
+                return (
+                  <Button
+                    key={i}
+                    variant="ghost"
+                    className={`w-full justify-start whitespace-normal h-auto px-5 py-5 text-left text-base sm:text-lg ${tone} ${isPicked ? "ring-4 ring-white/80 scale-[1.01]" : ""}`}
+                    onClick={() => setPicked(i)}
+                    disabled={submitting}
+                  >
+                    {opt}
+                  </Button>
+                );
+              })}
             </div>
 
             {status && <div className="text-sm text-muted-foreground">{status}</div>}
