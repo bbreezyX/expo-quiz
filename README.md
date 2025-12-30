@@ -2,6 +2,22 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+### Supabase setup (required)
+
+1) Create a Supabase project.
+2) Run the SQL schema in `supabase/schema.sql` inside the Supabase SQL editor.
+3) Add your keys in `.env.local`:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=your_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_key
+```
+
+Notes:
+- For local testing, you can disable RLS or add policies to allow `select/insert` on the tables above.
+- Enable Realtime for `answers` if you want live leaderboard updates.
+- If you already created tables before, add the new column: `alter table sessions add column if not exists ended_at timestamptz;`.
+
 First, run the development server:
 
 ```bash
@@ -18,7 +34,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load Space Grotesk and Fraunces.
 
 ## Learn More
 
