@@ -105,12 +105,18 @@ export default function JoinPage() {
           </Button>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 pt-4">
-          <div className="text-center py-6 px-4 rounded-2xl border border-slate-100 bg-white">
-            <p className="text-sm text-slate-600">Raih poin tertinggi</p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
+          <div
+            className="group flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200/60 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300 cursor-default animate-[fadeInUp_0.5s_ease-out_0.3s_both]"
+          >
+            <span className="text-lg group-hover:animate-bounce">🏆</span>
+            <span className="text-sm font-medium text-amber-700">Raih poin tertinggi</span>
           </div>
-          <div className="text-center py-6 px-4 rounded-2xl border border-slate-100 bg-white">
-            <p className="text-sm text-slate-600">Jawab secepat mungkin</p>
+          <div
+            className="group flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-sky-50 to-blue-50 border border-sky-200/60 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300 cursor-default animate-[fadeInUp_0.5s_ease-out_0.5s_both]"
+          >
+            <span className="text-lg group-hover:animate-pulse">⚡</span>
+            <span className="text-sm font-medium text-sky-700">Jawab secepat mungkin</span>
           </div>
         </div>
       </div>
