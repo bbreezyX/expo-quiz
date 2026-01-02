@@ -27,7 +27,7 @@ export default function JoinIndexPage() {
           <Input
             name="code"
             placeholder="Masukkan kode"
-            className="uppercase text-center text-lg h-14 rounded-full border-slate-200 bg-white"
+            className="text-center text-lg h-14 rounded-full border-slate-200 bg-white"
             autoComplete="off"
           />
           <Button type="submit" size="lg" className="w-full rounded-full h-14">

@@ -22,7 +22,6 @@ export default function AdminLoginPage() {
       localStorage.setItem("admin_authenticated", "true");
       localStorage.setItem("admin_auth_time", Date.now().toString());
       toast.success("Login berhasil!", {
-        description: "Selamat datang di Dashboard Admin",
       });
       router.push("/admin");
     } else {

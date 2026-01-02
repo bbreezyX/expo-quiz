@@ -36,8 +36,8 @@ export default function HomePage() {
           <form action={joinByCode} className="space-y-4">
             <Input
               name="code"
-              placeholder="Masukkan kode"
-              className="uppercase text-center text-lg h-14 rounded-full border-slate-200 bg-white"
+              placeholder="Kode"
+              className="text-center text-lg h-14 rounded-full border-slate-200 bg-white"
               autoComplete="off"
             />
             <Button type="submit" size="lg" className="w-full rounded-full h-14 text-base">

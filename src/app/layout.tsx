@@ -34,7 +34,16 @@ export default function RootLayout({
       <body
         className={`${spaceGrotesk.variable} ${bungee.variable} ${jetbrainsMono.variable} antialiased`}
       >
-        <Toaster position="top-center" richColors closeButton />
+        <Toaster
+          position="top-right"
+          richColors
+          closeButton={false}
+          toastOptions={{
+            style: {
+              borderRadius: '16px',
+            },
+          }}
+        />
         <div className="relative min-h-screen overflow-hidden">
           <div className="pointer-events-none absolute inset-0">
             <div className="absolute -top-28 -left-24 size-[420px] rounded-full bg-[radial-gradient(circle_at_30%_30%,rgba(255,94,98,0.65),transparent_60%)] blur-3xl animate-float" />
