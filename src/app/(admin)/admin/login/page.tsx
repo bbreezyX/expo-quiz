@@ -15,22 +15,33 @@ export default function AdminLoginPage() {
     e.preventDefault();
     setLoading(true);
 
-    // Passcode sederhana - bisa diganti dengan env variable
-    const ADMIN_PASSCODE = process.env.NEXT_PUBLIC_ADMIN_PASSCODE || "admin123";
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ passcode }),
+      });
 
-    if (passcode === ADMIN_PASSCODE) {
-      localStorage.setItem("admin_authenticated", "true");
-      localStorage.setItem("admin_auth_time", Date.now().toString());
-      toast.success("Login berhasil!", {
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        localStorage.setItem("admin_authenticated", "true");
+        localStorage.setItem("admin_auth_time", Date.now().toString());
+        toast.success("Login berhasil!");
+        router.push("/admin");
+      } else {
+        toast.error("Gagal login", {
+          description: data.error || "Passcode salah",
+        });
+        setPasscode("");
+      }
+    } catch {
+      toast.error("Error", {
+        description: "Gagal menghubungi server",
       });
-      router.push("/admin");
-    } else {
-      toast.error("Passcode salah", {
-        description: "Silakan coba lagi dengan passcode yang benar",
-      });
-      setPasscode("");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   return (
