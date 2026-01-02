@@ -4,8 +4,17 @@ export async function POST(req: Request) {
   try {
     const { passcode } = await req.json();
 
-    // Use a server-side environment variable (not prefixed with NEXT_PUBLIC_)
-    const CORRECT_PASSCODE = process.env.ADMIN_PASSCODE || "Bigger890";
+    // Passcode diambil HANYA dari environment variable.
+    // Tidak ada fallback password di dalam kode.
+    const CORRECT_PASSCODE = process.env.ADMIN_PASSCODE;
+
+    if (!CORRECT_PASSCODE) {
+      console.error("ADMIN_PASSCODE belum diset di environment variables!");
+      return NextResponse.json(
+        { error: "Konfigurasi server belum lengkap." },
+        { status: 500 }
+      );
+    }
 
     if (passcode === CORRECT_PASSCODE) {
       return NextResponse.json({ success: true });
@@ -23,4 +32,3 @@ export async function POST(req: Request) {
     );
   }
 }
-
