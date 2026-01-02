@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -96,7 +96,7 @@ export default function AdminPage() {
   const [points, setPoints] = useState(100);
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
 
-  async function readJson(res: Response) {
+  const readJson = useCallback(async (res: Response) => {
     const text = await res.text();
     if (!text) return null;
     try {
@@ -104,14 +104,29 @@ export default function AdminPage() {
     } catch {
       return null;
     }
-  }
+  }, []);
 
-  // Auth check
+  const loadSessions = useCallback(async () => {
+    const res = await fetch("/api/session/list");
+    const json = await readJson(res);
+    if (!res.ok) {
+      setStatus(json?.error || "Daftar sesi belum bisa dimuat.");
+      return;
+    }
+    setSessions(Array.isArray(json?.sessions) ? json.sessions : []);
+  }, [readJson]);
+
+  // Set origin on mount (client-side only)
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
+  // Auth check - check authentication status on mount
   useEffect(() => {
     const authenticated = localStorage.getItem("admin_authenticated");
     const authTime = localStorage.getItem("admin_auth_time");
 
-    // Check if authenticated and session is still valid (24 hours)
     if (authenticated && authTime) {
       const timeDiff = Date.now() - parseInt(authTime);
       const hoursDiff = timeDiff / (1000 * 60 * 60);
@@ -127,26 +142,30 @@ export default function AdminPage() {
       router.push("/admin/login");
     }
   }, [router]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
-    setOrigin(window.location.origin);
-  }, []);
+    if (!isAuthenticated) return;
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadSessions();
-    }
-  }, [isAuthenticated]);
+    let cancelled = false;
 
-  async function loadSessions() {
-    const res = await fetch("/api/session/list");
-    const json = await readJson(res);
-    if (!res.ok) {
-      setStatus(json?.error || "Daftar sesi belum bisa dimuat.");
-      return;
-    }
-    setSessions(Array.isArray(json?.sessions) ? json.sessions : []);
-  }
+    (async () => {
+      const res = await fetch("/api/session/list");
+      const json = await readJson(res);
+
+      if (cancelled) return;
+
+      if (!res.ok) {
+        setStatus(json?.error || "Daftar sesi belum bisa dimuat.");
+        return;
+      }
+      setSessions(Array.isArray(json?.sessions) ? json.sessions : []);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, readJson]);
 
   async function createSession() {
     setStatus(null);
@@ -224,7 +243,7 @@ export default function AdminPage() {
     setBusy(false);
   }
 
-  async function loadQuestions(sid: string) {
+  const loadQuestions = useCallback(async (sid: string) => {
     const { data, error } = await supabase
       .from("questions")
       .select("id, order_no, question, options, correct_index, points")
@@ -238,10 +257,34 @@ export default function AdminPage() {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setQuestions(((data as any) ?? []).map((q: any) => ({ ...q, options: q.options as string[] })));
-  }
+  }, []);
 
   useEffect(() => {
-    if (sessionId) loadQuestions(sessionId);
+    if (!sessionId) return;
+
+    let cancelled = false;
+
+    (async () => {
+      const { data, error } = await supabase
+        .from("questions")
+        .select("id, order_no, question, options, correct_index, points")
+        .eq("session_id", sessionId)
+        .order("order_no", { ascending: true });
+
+      if (cancelled) return;
+
+      if (error) {
+        setStatus("Pertanyaan belum bisa dimuat.");
+        return;
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setQuestions(((data as any) ?? []).map((q: any) => ({ ...q, options: q.options as string[] })));
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [sessionId]);
 
   async function addQuestion() {
