@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import JoinSubmitButton from "./join-submit-button";
 
 async function joinByCode(formData: FormData) {
   "use server";
@@ -30,9 +31,7 @@ export default function JoinIndexPage() {
             className="text-center text-lg h-14 rounded-full border-slate-200 bg-white"
             autoComplete="off"
           />
-          <Button type="submit" size="lg" className="w-full rounded-full h-14">
-            Lanjut
-          </Button>
+          <JoinSubmitButton />
         </form>
 
         <div className="grid gap-4 sm:grid-cols-2 pt-4">

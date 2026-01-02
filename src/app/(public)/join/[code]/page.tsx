@@ -65,6 +65,7 @@ export default function JoinPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="text-center text-lg h-14 rounded-full border-slate-200"
+              disabled={loading}
             />
             {err && (
               <div className="bg-slate-100 rounded-2xl px-6 py-4 text-sm text-slate-600 text-center">
@@ -79,7 +80,14 @@ export default function JoinPage() {
             disabled={name.trim().length < 2 || loading}
             size="lg"
           >
-            {loading ? "Memproses..." : "Mulai Quiz"}
+            {loading ? (
+              <span className="inline-flex items-center justify-center gap-2">
+                <span className="size-4 animate-spin rounded-full border-2 border-white/50 border-t-white" />
+                Memproses...
+              </span>
+            ) : (
+              "Mulai Quiz"
+            )}
           </Button>
         </div>
 

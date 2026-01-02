@@ -29,7 +29,7 @@ const emptyOptions = ["", "", "", ""];
 // Reusable Components
 function Section({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`bg-white rounded-3xl border border-slate-100 p-8 sm:p-10 ${className}`}>
+    <div className={`bg-white rounded-3xl border border-slate-100 p-6 sm:p-8 ${className}`}>
       {children}
     </div>
   );
@@ -37,9 +37,9 @@ function Section({ children, className = "" }: { children: React.ReactNode; clas
 
 function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <div className="space-y-2 mb-8">
-      <h2 className="text-2xl font-semibold text-slate-900">{title}</h2>
-      {subtitle && <p className="text-slate-500 text-sm">{subtitle}</p>}
+    <div className="space-y-1">
+      <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
+      {subtitle && <p className="text-slate-500 text-xs">{subtitle}</p>}
     </div>
   );
 }
@@ -64,13 +64,13 @@ function StatusBadge({ status }: { status: "active" | "ended" | "none" }) {
 
 function InfoBox({ label, value, onCopy }: { label: string; value: string; onCopy?: () => void }) {
   return (
-    <div className="flex items-center justify-between py-4 border-b border-slate-100 last:border-0">
-      <div className="space-y-1">
-        <div className="text-xs text-slate-500">{label}</div>
-        <div className="font-mono text-sm text-slate-900 break-all">{value}</div>
+    <div className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
+      <div className="space-y-0.5">
+        <div className="text-[10px] text-slate-500 uppercase tracking-wider">{label}</div>
+        <div className="font-mono text-xs text-slate-900 break-all">{value}</div>
       </div>
       {onCopy && (
-        <Button size="sm" variant="ghost" onClick={onCopy} className="ml-4 shrink-0">
+        <Button size="sm" variant="ghost" onClick={onCopy} className="ml-3 shrink-0 h-7 text-xs">
           Salin
         </Button>
       )}
@@ -460,7 +460,7 @@ export default function AdminPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white px-6 py-16 sm:py-20">
-      <div className="mx-auto max-w-5xl space-y-16">
+      <div className="mx-auto max-w-7xl space-y-16">
         <header className="text-center space-y-6">
           <div className="flex items-center justify-center gap-4">
             <h1 className="text-5xl sm:text-6xl font-bold text-slate-900">
@@ -480,35 +480,41 @@ export default function AdminPage() {
           </p>
         </header>
 
-        <Section>
-          <div className="flex items-center justify-between mb-8">
-            <SectionHeader title="Sesi" subtitle="Buat sesi baru atau muat yang sudah ada" />
-            <StatusBadge status={sessionStatus} />
-          </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 relative">
+          {/* Divider vertikal di tengah */}
+          <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 w-px bg-slate-200 -translate-x-1/2"></div>
 
-          <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row gap-3">
+          {/* Kolom Kiri: Sesi & Tambah Pertanyaan */}
+          <div className="space-y-8 lg:pr-8">
+            <Section>
+              <div className="flex items-center justify-between mb-6">
+                <SectionHeader title="Sesi" subtitle="Buat sesi baru atau muat yang sudah ada" />
+                <StatusBadge status={sessionStatus} />
+              </div>
+
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Button
                 onClick={createSession}
                 disabled={busy}
-                size="lg"
-                className="rounded-full px-8"
+                size="default"
+                className="rounded-full px-6"
               >
                 Buat Sesi Baru
               </Button>
-              <div className="flex flex-1 gap-3">
+              <div className="flex flex-1 gap-2">
                 <Input
                   value={manualCode}
                   onChange={(e) => setManualCode(e.target.value.toUpperCase())}
                   placeholder="Kode sesi"
-                  className="uppercase rounded-full border-slate-200"
+                  className="rounded-full border-slate-200"
                 />
                 <Button
                   variant="outline"
                   onClick={loadSession}
                   disabled={busy}
-                  size="lg"
-                  className="rounded-full px-8"
+                  size="default"
+                  className="rounded-full px-6"
                 >
                   Muat
                 </Button>
@@ -516,13 +522,13 @@ export default function AdminPage() {
             </div>
 
             {code && (
-              <div className="bg-slate-50 rounded-2xl p-6 space-y-1">
+              <div className="bg-slate-50 rounded-2xl p-4 space-y-1">
                 <InfoBox label="Kode Sesi" value={code} onCopy={() => copyText(code)} />
                 <InfoBox label="Link Peserta" value={joinUrl} onCopy={() => copyText(joinUrl)} />
                 <InfoBox label="Link Layar" value={screenUrl} onCopy={() => copyText(screenUrl)} />
 
-                <div className="flex items-center justify-between pt-6">
-                  <p className="text-sm text-slate-500">
+                <div className="flex items-center justify-between pt-4">
+                  <p className="text-xs text-slate-500">
                     {endedAt ? "Sesi sudah selesai" : "Sesi sedang berjalan"}
                   </p>
                   {!endedAt && (
@@ -531,7 +537,7 @@ export default function AdminPage() {
                       variant="outline"
                       onClick={endSession}
                       disabled={busy}
-                      className="rounded-full"
+                      className="rounded-full text-xs h-8"
                     >
                       Akhiri Sesi
                     </Button>
@@ -546,10 +552,12 @@ export default function AdminPage() {
               </div>
             )}
           </div>
-        </Section>
+            </Section>
 
-        <Section>
-          <SectionHeader title="Tambah Pertanyaan" subtitle="Buat pertanyaan baru untuk sesi ini" />
+            <Section>
+              <div className="mb-6">
+                <SectionHeader title="Tambah Pertanyaan" subtitle="Buat pertanyaan baru untuk sesi ini" />
+              </div>
 
           {endedAt && (
             <div className="bg-slate-100 rounded-2xl px-6 py-4 text-sm text-slate-600 mb-6">
@@ -557,9 +565,9 @@ export default function AdminPage() {
             </div>
           )}
 
-          <div className="space-y-6">
+          <div className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-3">
+              <label className="block text-sm font-medium text-slate-700 mb-2">
                 Pertanyaan
               </label>
               <textarea
@@ -567,15 +575,15 @@ export default function AdminPage() {
                 onChange={(e) => setQuestionText(e.target.value)}
                 placeholder="Tulis pertanyaan di sini..."
                 disabled={busy || !code || !!endedAt}
-                className="min-h-[120px] w-full rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm outline-none focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all"
+                className="min-h-[100px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-3">
+              <label className="block text-sm font-medium text-slate-700 mb-2">
                 Opsi Jawaban
               </label>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-2.5 sm:grid-cols-2">
                 {options.map((opt, i) => (
                   <Input
                     key={i}
@@ -589,16 +597,16 @@ export default function AdminPage() {
               </div>
             </div>
 
-            <div className="grid gap-6 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-3">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
                   Jawaban Benar
                 </label>
                 <select
                   value={String(correctIndex)}
                   onChange={(e) => setCorrectIndex(Number(e.target.value))}
                   disabled={busy || !code || !!endedAt}
-                  className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all"
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all"
                 >
                   {options.map((_, i) => (
                     <option key={i} value={i}>
@@ -609,7 +617,7 @@ export default function AdminPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-3">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
                   Poin
                 </label>
                 <Input
@@ -618,7 +626,7 @@ export default function AdminPage() {
                   onChange={(e) => setPoints(Number(e.target.value))}
                   min={0}
                   disabled={busy || !code || !!endedAt}
-                  className="rounded-xl border-slate-200"
+                  className="rounded-xl border-slate-200 h-10"
                 />
               </div>
             </div>
@@ -626,108 +634,139 @@ export default function AdminPage() {
             <Button
               onClick={addQuestion}
               disabled={busy || !code || !!endedAt}
-              size="lg"
+              size="default"
               className="w-full rounded-full"
             >
               Tambah Pertanyaan
             </Button>
-          </div>
-        </Section>
-
-        <Section>
-          <div className="flex items-center justify-between mb-8">
-            <SectionHeader title="Riwayat Sesi" subtitle="Sesi yang pernah dibuat" />
-            <Button
-              variant="outline"
-              onClick={loadSessions}
-              disabled={busy}
-              className="rounded-full"
-            >
-              Refresh
-            </Button>
+              </div>
+            </Section>
           </div>
 
-          <div className="space-y-3">
-            {sessions.map((s) => (
-              <div
-                key={s.id}
-                className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-100 bg-slate-50 px-6 py-5 hover:border-slate-200 transition-colors"
-              >
-                <div className="space-y-2">
-                  <div className="font-semibold text-slate-900">{s.title}</div>
-                  <div className="flex items-center gap-4 text-xs text-slate-500">
-                    <span className="font-mono">{s.code}</span>
-                    <span>{s.ended_at ? "Selesai" : "Aktif"}</span>
-                  </div>
-                </div>
+          {/* Kolom Kanan: Riwayat Sesi & Bank Pertanyaan */}
+          <div className="space-y-8 lg:pl-8">
+            <Section>
+              <div className="flex items-center justify-between mb-6">
+                <SectionHeader title="Riwayat Sesi" subtitle="Sesi yang pernah dibuat" />
                 <Button
+                  variant="outline"
                   size="sm"
-                  variant="ghost"
-                  onClick={() => {
-                    setManualCode(s.code);
-                    setCode(s.code);
-                    setSessionId(s.id);
-                    setEndedAt(s.ended_at ?? null);
-                  }}
-                  className="rounded-full"
+                  onClick={loadSessions}
+                  disabled={busy}
+                  className="rounded-full h-8 text-xs"
                 >
-                  Pilih
+                  Refresh
                 </Button>
               </div>
-            ))}
-            {sessions.length === 0 && (
-              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-12 text-center text-sm text-slate-400">
-                Belum ada sesi tersimpan
-              </div>
-            )}
-          </div>
-        </Section>
 
-        <Section>
-          <div className="flex items-center justify-between mb-8">
-            <SectionHeader title="Bank Pertanyaan" subtitle="Daftar pertanyaan yang sudah dibuat" />
-            <div className="bg-slate-100 px-4 py-1.5 rounded-full text-xs font-medium text-slate-600">
-              {questions.length} pertanyaan
-            </div>
-          </div>
-
-          <div className="space-y-6">
-            {questions.map((q) => (
-              <div
-                key={q.id}
-                className="rounded-2xl border border-slate-100 bg-white p-6 hover:border-slate-200 transition-colors"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-medium text-slate-400">Q{q.order_no}</span>
-                  <span className="text-xs font-medium text-slate-600">{q.points} poin</span>
-                </div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-6">{q.question}</h3>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {q.options.map((opt, i) => (
-                    <div
-                      key={`${q.id}-${i}`}
-                      className={`rounded-xl px-4 py-3 text-sm border transition-all ${
-                        i === q.correct_index
-                          ? "bg-slate-900 text-white border-slate-900"
-                          : "bg-slate-50 text-slate-700 border-slate-100"
-                      }`}
-                    >
-                      <div className="text-[10px] uppercase tracking-wider opacity-60 mb-1">
-                        Opsi {i + 1}
+              <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2
+                [&::-webkit-scrollbar]:w-2
+                [&::-webkit-scrollbar-track]:bg-slate-100
+                [&::-webkit-scrollbar-track]:rounded-full
+                [&::-webkit-scrollbar-thumb]:bg-slate-300
+                [&::-webkit-scrollbar-thumb]:rounded-full
+                [&::-webkit-scrollbar-thumb]:hover:bg-slate-400">
+                {sessions.map((s) => (
+                  <div
+                    key={s.id}
+                    className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-5 py-4 hover:border-slate-200 hover:shadow-sm transition-all cursor-pointer"
+                    onClick={() => {
+                      setManualCode(s.code);
+                      setCode(s.code);
+                      setSessionId(s.id);
+                      setEndedAt(s.ended_at ?? null);
+                    }}
+                  >
+                    <div className="space-y-1.5">
+                      <div className="font-semibold text-slate-900 text-sm">{s.title}</div>
+                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <span className="font-mono bg-white px-2 py-1 rounded border border-slate-200">{s.code}</span>
                       </div>
-                      <div className="font-medium">{opt}</div>
                     </div>
-                  ))}
+                    <div className="flex items-center justify-between">
+                      <span className={`text-[10px] uppercase tracking-wider font-medium ${
+                        s.ended_at ? "text-slate-400" : "text-green-600"
+                      }`}>
+                        {s.ended_at ? "Selesai" : "Aktif"}
+                      </span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setManualCode(s.code);
+                          setCode(s.code);
+                          setSessionId(s.id);
+                          setEndedAt(s.ended_at ?? null);
+                        }}
+                        className="rounded-full h-7 text-xs"
+                      >
+                        Pilih
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                {sessions.length === 0 && (
+                  <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-8 text-center text-sm text-slate-400">
+                    Belum ada sesi tersimpan
+                  </div>
+                )}
+              </div>
+            </Section>
+
+            <Section>
+              <div className="flex items-center justify-between mb-6">
+                <SectionHeader title="Bank Pertanyaan" subtitle="Daftar pertanyaan yang sudah dibuat" />
+                <div className="bg-slate-100 px-3 py-1 rounded-full text-xs font-medium text-slate-600">
+                  {questions.length} pertanyaan
                 </div>
               </div>
-            ))}
-            {questions.length === 0 && (
-              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-12 text-center text-sm text-slate-400">
-                Belum ada pertanyaan. Tambahkan dari form di atas.
+
+              <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2
+                [&::-webkit-scrollbar]:w-2
+                [&::-webkit-scrollbar-track]:bg-slate-100
+                [&::-webkit-scrollbar-track]:rounded-full
+                [&::-webkit-scrollbar-thumb]:bg-slate-300
+                [&::-webkit-scrollbar-thumb]:rounded-full
+                [&::-webkit-scrollbar-thumb]:hover:bg-slate-400">
+                {questions.map((q) => (
+                  <div
+                    key={q.id}
+                    className="rounded-2xl border border-slate-100 bg-white p-6 hover:border-slate-300 hover:shadow-md transition-all"
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-xs font-medium text-slate-400 bg-slate-50 px-3 py-1 rounded-full">Q{q.order_no}</span>
+                      <span className="text-xs font-semibold text-slate-600 bg-amber-50 px-3 py-1 rounded-full">{q.points} poin</span>
+                    </div>
+                    <h3 className="text-base font-semibold text-slate-900 mb-5 leading-relaxed">{q.question}</h3>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {q.options.map((opt, i) => (
+                        <div
+                          key={`${q.id}-${i}`}
+                          className={`rounded-xl px-4 py-3 text-sm border transition-all ${
+                            i === q.correct_index
+                              ? "bg-slate-900 text-white border-slate-900 shadow-lg"
+                              : "bg-slate-50 text-slate-700 border-slate-100 hover:border-slate-200"
+                          }`}
+                        >
+                          <div className="text-[10px] uppercase tracking-wider opacity-60 mb-1">
+                            Opsi {i + 1}
+                          </div>
+                          <div className="font-medium">{opt}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                {questions.length === 0 && (
+                  <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-12 text-center text-sm text-slate-400">
+                    Belum ada pertanyaan. Tambahkan dari form di atas.
+                  </div>
+                )}
               </div>
-            )}
+            </Section>
           </div>
-        </Section>
+        </div>
       </div>
     </main>
   );

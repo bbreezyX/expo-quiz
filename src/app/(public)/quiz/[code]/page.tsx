@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { AnimatePresence, motion } from "framer-motion";
 
 type Question = {
   id: string;
@@ -64,13 +65,6 @@ function ProgressItem({ index, active, done }: ProgressItemProps) {
       }`}
     >
       <div className="flex items-center gap-3">
-        <div
-          className={`flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
-            active ? "bg-white text-slate-900" : done ? "bg-slate-200 text-slate-700" : "bg-slate-100 text-slate-500"
-          }`}
-        >
-          {index + 1}
-        </div>
         <div className={`text-xs font-medium ${active ? "text-white" : done ? "text-slate-600" : "text-slate-400"}`}>
           Soal {index + 1}
         </div>
@@ -95,6 +89,10 @@ export default function QuizPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [hideBar, setHideBar] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const lastScrollY = useRef(0);
+  const scrollTicking = useRef(false);
 
   useEffect(() => {
     if (!code) return;
@@ -107,6 +105,10 @@ export default function QuizPage() {
       if (!code) return;
       setLoading(true);
       setError(null);
+      const storedParticipantId = localStorage.getItem(`participant:${code}`);
+      if (storedParticipantId) {
+        setParticipantId(storedParticipantId);
+      }
       const { data: s } = await supabase.from("sessions").select("*").eq("code", code).single();
       if (!s) {
         setError("Sesi tidak ketemu. Coba cek kodenya lagi ya.");
@@ -126,14 +128,72 @@ export default function QuizPage() {
         .order("order_no", { ascending: true });
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setQuestions((qs ?? []).map((q: any) => ({ ...q, options: q.options as string[] })));
+      const normalizedQuestions = (qs ?? []).map((q: any) => ({ ...q, options: q.options as string[] }));
+      setQuestions(normalizedQuestions);
       setSessionId(s.id);
-      setIdx(0);
+      let nextIndex = 0;
+      if (storedParticipantId && normalizedQuestions.length > 0) {
+        const { data: answers, error: answersErr } = await supabase
+          .from("answers")
+          .select("question_id")
+          .eq("session_id", s.id)
+          .eq("participant_id", storedParticipantId);
+
+        if (!answersErr && answers?.length) {
+          const answered = new Set((answers as Array<{ question_id: string }>).map((a) => a.question_id));
+          const firstUnanswered = normalizedQuestions.findIndex((q) => !answered.has(q.id));
+          if (firstUnanswered === -1) {
+            setLoading(false);
+            router.replace(`/quiz/${code}/done`);
+            return;
+          }
+          nextIndex = firstUnanswered;
+        }
+      }
+      setIdx(nextIndex);
       setPicked(null);
       setLoading(false);
     }
     load();
   }, [code, router]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia("(max-width: 639px)");
+    const update = () => setIsMobile(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !isMobile || picked !== null) {
+      setHideBar(false);
+      return;
+    }
+    lastScrollY.current = window.scrollY;
+
+    function onScroll() {
+      if (scrollTicking.current) return;
+      scrollTicking.current = true;
+
+      window.requestAnimationFrame(() => {
+        const currentY = window.scrollY;
+        const delta = currentY - lastScrollY.current;
+
+        if (Math.abs(delta) > 8) {
+          const shouldHide = currentY > lastScrollY.current && currentY > 96;
+          setHideBar((prev) => (prev === shouldHide ? prev : shouldHide));
+          lastScrollY.current = currentY;
+        }
+
+        scrollTicking.current = false;
+      });
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [isMobile, picked]);
 
   const q = questions[idx];
   const total = questions.length;
@@ -171,11 +231,6 @@ export default function QuizPage() {
     setPicked(null);
     setStatus(null);
     setSubmitting(false);
-    toast.success("Jawaban terkirim!", {
-      id: "submit-answer",
-      description: idx + 1 < total ? "Lanjut ke soal berikutnya" : "Semua soal sudah selesai!",
-    });
-
     if (idx + 1 < total) setIdx(idx + 1);
     else router.push(`/quiz/${code}/done`);
   }
@@ -238,7 +293,7 @@ export default function QuizPage() {
   const answerOptions = [...q.options, "Semua jawaban di atas benar"];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white px-4 py-12 sm:px-6">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white px-4 pt-12 pb-28 sm:px-6 sm:py-12">
       <div className="mx-auto max-w-3xl space-y-12">
         {/* Header */}
         <div className="text-center space-y-4">
@@ -272,62 +327,91 @@ export default function QuizPage() {
         </div>
 
         {/* Question Card */}
-        <div className="bg-white rounded-3xl border border-slate-100 p-8 sm:p-12 space-y-10">
-          <div className="space-y-6">
-            <div className="space-y-3">
-              <p className="text-xs uppercase tracking-wider text-slate-500 font-medium">
-                Pertanyaan {idx + 1}
-              </p>
-              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 leading-relaxed">
-                {q.question}
-              </h2>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={q.id}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -16 }}
+            transition={{ duration: 0.2 }}
+            className="bg-white rounded-3xl border border-slate-100 p-8 sm:p-12 space-y-10"
+          >
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <p className="text-xs uppercase tracking-wider text-slate-500 font-medium">
+                  Pertanyaan {idx + 1}
+                </p>
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 leading-relaxed">
+                  {q.question}
+                </h2>
+              </div>
+
+              <div className="space-y-3">
+                {answerOptions.map((opt, i) => (
+                  <OptionCard
+                    key={`${q.id}-${i}`}
+                    label={opt}
+                    index={i}
+                    picked={picked === i}
+                    disabled={submitting}
+                    onPick={() => setPicked(i)}
+                  />
+                ))}
+              </div>
             </div>
 
-            <div className="space-y-3">
-              {answerOptions.map((opt, i) => (
-                <OptionCard
-                  key={`${q.id}-${i}`}
-                  label={opt}
-                  index={i}
-                  picked={picked === i}
-                  disabled={submitting}
-                  onPick={() => setPicked(i)}
-                />
-              ))}
-            </div>
-          </div>
+            {status && (
+              <div className="text-center text-sm text-slate-600 bg-slate-100 rounded-2xl px-6 py-4">
+                <span className="inline-flex items-center justify-center gap-2">
+                  {submitting && (
+                    <span className="size-4 animate-spin rounded-full border-2 border-slate-400/40 border-t-slate-500" />
+                  )}
+                  {status}
+                </span>
+              </div>
+            )}
 
-          {status && (
-            <div className="text-center text-sm text-slate-600 bg-slate-100 rounded-2xl px-6 py-4">
-              {status}
-            </div>
-          )}
+            {!participantId && (
+              <div className="text-center text-sm text-slate-600 bg-slate-100 rounded-2xl px-6 py-4">
+                Kamu belum terdaftar. Silakan join ulang.
+              </div>
+            )}
 
-          {!participantId && (
-            <div className="text-center text-sm text-slate-600 bg-slate-100 rounded-2xl px-6 py-4">
-              Kamu belum terdaftar. Silakan join ulang.
-            </div>
-          )}
-
-          <div className="flex flex-col sm:flex-row gap-3 pt-6">
-            <Button
-              variant="ghost"
-              onClick={() => idx > 0 && setIdx(idx - 1)}
-              disabled={idx === 0 || submitting}
-              className="rounded-full"
+            <motion.div
+              aria-hidden={isMobile && hideBar}
+              animate={{ y: isMobile && hideBar ? 96 : 0, opacity: isMobile && hideBar ? 0 : 1 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              style={{ pointerEvents: isMobile && hideBar ? "none" : "auto" }}
+              className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-100 bg-white/95 px-4 py-4 backdrop-blur sm:static sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-0"
             >
-              Kembali
-            </Button>
-            <Button
-              size="lg"
-              className="flex-1 rounded-full h-14 text-base"
-              onClick={submit}
-              disabled={picked === null || !participantId || submitting}
-            >
-              {submitting ? "Mengirim..." : "Kirim Jawaban"}
-            </Button>
-          </div>
-        </div>
+              <div className="mx-auto flex max-w-3xl flex-col gap-3 sm:flex-row sm:pt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => idx > 0 && setIdx(idx - 1)}
+                  disabled={idx === 0 || submitting}
+                  className="order-2 sm:order-1 w-full sm:w-auto rounded-full h-12 text-slate-600"
+                >
+                  Kembali
+                </Button>
+                <Button
+                  size="lg"
+                  className="order-1 sm:order-2 w-full sm:flex-1 rounded-full h-14 text-base shadow-lg shadow-slate-900/10"
+                  onClick={submit}
+                  disabled={picked === null || !participantId || submitting}
+                >
+                  {submitting ? (
+                    <span className="inline-flex items-center justify-center gap-2">
+                      <span className="size-4 animate-spin rounded-full border-2 border-white/50 border-t-white" />
+                      Mengirim...
+                    </span>
+                  ) : (
+                    "Kirim Jawaban"
+                  )}
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        </AnimatePresence>
 
         {/* Tips */}
         <div className="bg-slate-50 rounded-2xl px-6 py-4 border border-slate-100 text-center text-sm text-slate-600">
