@@ -72,13 +72,13 @@ export default function JoinPage() {
           </p>
         </div>
 
-        <div className="space-y-6">
-          <div className="space-y-3">
+        <div className="flex flex-col items-center space-y-6">
+          <div className="w-full space-y-3">
             <Input
               placeholder="Masukkan nama"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="text-center text-lg h-14 rounded-full border-slate-200"
+              className="text-center text-lg h-14 rounded-full border-slate-200 shadow-sm"
               disabled={loading}
             />
             {err && (
@@ -89,7 +89,7 @@ export default function JoinPage() {
           </div>
 
           <Button
-            className="w-full rounded-full h-14 text-base"
+            className="px-10 rounded-full font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
             onClick={join}
             disabled={name.trim().length < 2 || loading}
             size="lg"
