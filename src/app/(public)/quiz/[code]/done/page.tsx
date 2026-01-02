@@ -1,15 +1,15 @@
-"use client";
-
 import Link from "next/link";
-import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 
-export default function QuizDonePage() {
-  const params = useParams();
-  const rawCode = params?.code;
-  const code = (Array.isArray(rawCode) ? rawCode[0] : rawCode || "").toUpperCase();
-  const leaderboardHref = code ? `/screen/${code}` : "/";
+type Props = {
+  params: Promise<{ code: string }>;
+};
+
+export default async function QuizDonePage({ params }: Props) {
+  const { code: rawCode } = await params;
+  const code = rawCode.toUpperCase();
+  const leaderboardHref = `/screen/${code}`;
 
   return (
     <main className="min-h-screen flex items-center justify-center px-6 py-20">

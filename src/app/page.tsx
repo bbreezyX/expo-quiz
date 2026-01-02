@@ -1,15 +1,20 @@
-import Link from "next/link";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
 
 export default function HomePage() {
-  async function joinByCode(formData: FormData) {
-    "use server";
-    const code = String(formData.get("code") || "").trim().toUpperCase();
-    if (!code) return;
-    redirect(`/join/${code}`);
+  const router = useRouter();
+  const [code, setCode] = useState("");
+
+  function handleJoin(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmedCode = code.trim().toUpperCase();
+    if (!trimmedCode) return;
+    router.push(`/join/${trimmedCode}`);
   }
 
   return (
@@ -46,9 +51,10 @@ export default function HomePage() {
             <h2 className="text-2xl font-semibold text-slate-900">Gabung Sesi</h2>
           </div>
 
-          <form action={joinByCode} className="space-y-4">
+          <form onSubmit={handleJoin} className="space-y-4">
             <Input
-              name="code"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
               placeholder="Masukkan kode sesi"
               className="text-center text-lg h-14 rounded-full border-slate-200 bg-white"
               autoComplete="off"
@@ -61,13 +67,5 @@ export default function HomePage() {
 
       </div>
     </main>
-  );
-}
-
-function FeatureCard({ text }: { text: string }) {
-  return (
-    <div className="text-center py-8 px-6 rounded-2xl border border-slate-100 bg-white hover:border-slate-200 transition-colors">
-      <p className="text-slate-600 font-medium">{text}</p>
-    </div>
   );
 }
