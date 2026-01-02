@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "mcp__ide__getDiagnostics",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(git -C \"C:\\\\Users\\\\distributorkomputer\\\\Documents\\\\expo-quiz\" add src/app/template.tsx src/app/page.tsx \"src/app/\\(public\\)/quiz/[code]/done/page.tsx\" src/components/ui/table.tsx)",
+      "Bash(git -C \"C:\\\\Users\\\\distributorkomputer\\\\Documents\\\\expo-quiz\" status)",
+      "Bash(git -C \"C:\\\\Users\\\\distributorkomputer\\\\Documents\\\\expo-quiz\" diff \"src/app/\\(public\\)/join/[code]/page.tsx\" src/app/globals.css)",
+      "Bash(git -C \"C:\\\\Users\\\\distributorkomputer\\\\Documents\\\\expo-quiz\" commit -m \"$\\(cat <<''EOF''\nAdd page transitions and optimize server/client components\n\n- Add template.tsx with Framer Motion for smooth page transitions\n- Convert home page to client-side navigation for better UX\n- Convert quiz done page to async server component\n- Remove unnecessary \"use client\" from table component\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git -C \"C:\\\\Users\\\\distributorkomputer\\\\Documents\\\\expo-quiz\" push)"
     ]
   }
 }
