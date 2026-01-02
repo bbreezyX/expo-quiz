@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import Image from "next/image";
+import { useParticipantSession } from "@/lib/hooks";
 
 export default function JoinPage() {
   const params = useParams();
@@ -15,6 +16,16 @@ export default function JoinPage() {
   const [name, setName] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Check if already joined this session
+  const { sessionCode, isAuthenticated, isLoading: authLoading } = useParticipantSession();
+  
+  useEffect(() => {
+    // If already joined this session, redirect to quiz
+    if (!authLoading && isAuthenticated && sessionCode === code) {
+      router.replace(`/quiz/${code}`);
+    }
+  }, [authLoading, isAuthenticated, sessionCode, code, router]);
 
   async function join() {
     setErr(null);
@@ -37,14 +48,21 @@ export default function JoinPage() {
       return;
     }
 
-    localStorage.setItem(`participant:${code}`, json.participant.id);
-    localStorage.setItem(`sessionId:${code}`, json.session.id);
     toast.success("Berhasil bergabung!", {
       id: "join-session",
       description: `Selamat datang, ${name}!`,
     });
     router.push(`/quiz/${code}`);
     setLoading(false);
+  }
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <main className="min-h-screen flex items-center justify-center px-6 py-20">
+        <div className="text-lg text-slate-500">Memuat...</div>
+      </main>
+    );
   }
 
   return (

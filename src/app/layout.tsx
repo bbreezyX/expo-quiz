@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "sonner";
+import { Providers } from "@/components/providers";
 import "./globals.css";
 
 const inter = Inter({
@@ -56,7 +57,9 @@ export default function RootLayout({
             <div className="absolute -bottom-28 left-1/3 size-[320px] rounded-full bg-[radial-gradient(circle_at_30%_30%,rgba(255,199,0,0.35),transparent_60%)] blur-3xl animate-float-slower" />
             <div className="absolute bottom-10 left-8 h-28 w-44 rotate-6 rounded-[48px] bg-[linear-gradient(135deg,rgba(255,199,0,0.35),rgba(17,17,17,0.08))] blur-2xl" />
           </div>
-          <div className="relative z-10">{children}</div>
+          <div className="relative z-10">
+            <Providers>{children}</Providers>
+          </div>
         </div>
       </body>
     </html>

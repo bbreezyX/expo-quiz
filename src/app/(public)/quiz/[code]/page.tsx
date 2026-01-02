@@ -1,21 +1,18 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
-
-type Question = {
-  id: string;
-  order_no: number;
-  question: string;
-  options: string[];
-  points: number;
-};
+import { 
+  useParticipantSession, 
+  useSession, 
+  useQuestions, 
+  useAnsweredQuestions,
+  type Question 
+} from "@/lib/hooks";
 
 type OptionCardProps = {
   label: string;
@@ -81,85 +78,67 @@ export default function QuizPage() {
   const code = (Array.isArray(rawCode) ? rawCode[0] : rawCode || "").toUpperCase();
   const router = useRouter();
 
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [participantId, setParticipantId] = useState<string | null>(null);
+  // Use SWR hooks for data fetching with caching
+  const { 
+    session: participantSession, 
+    participantId, 
+    sessionId: authSessionId,
+    sessionCode: authSessionCode,
+    isLoading: authLoading 
+  } = useParticipantSession();
 
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const { session, isLoading: sessionLoading } = useSession(code);
+  const sessionId = authSessionId || session?.id || null;
+  
+  const { questions, isLoading: questionsLoading } = useQuestions(sessionId);
+  const { answeredQuestions, refresh: refreshAnswers } = useAnsweredQuestions(
+    sessionId, 
+    participantId || null
+  );
+
   const [idx, setIdx] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);
   const [status, setStatus] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [hideBar, setHideBar] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [initialized, setInitialized] = useState(false);
   const lastScrollY = useRef(0);
   const scrollTicking = useRef(false);
 
+  // Check if participant session matches current quiz code
+  const isValidSession = useMemo(() => {
+    if (!participantSession?.authenticated) return false;
+    return authSessionCode === code;
+  }, [participantSession, authSessionCode, code]);
+
+  // Loading state
+  const isLoading = authLoading || sessionLoading || questionsLoading;
+
+  // Initialize question index based on answered questions
   useEffect(() => {
-    if (!code) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setParticipantId(localStorage.getItem(`participant:${code}`));
-    setSessionId(localStorage.getItem(`sessionId:${code}`));
-  }, [code, router]);
-
-  useEffect(() => {
-    async function load() {
-      if (!code) return;
-      setLoading(true);
-      setError(null);
-      const storedParticipantId = localStorage.getItem(`participant:${code}`);
-      if (storedParticipantId) {
-        setParticipantId(storedParticipantId);
-      }
-      const { data: s } = await supabase.from("sessions").select("*").eq("code", code).single();
-      if (!s) {
-        setError("Sesi tidak ketemu. Coba cek kodenya lagi ya.");
-        setLoading(false);
-        return;
-      }
-      if (s.ended_at) {
-        setLoading(false);
-        router.replace(`/quiz/${code}/done`);
-        return;
-      }
-
-      const { data: qs } = await supabase
-        .from("questions")
-        .select("id, order_no, question, options, points")
-        .eq("session_id", s.id)
-        .order("order_no", { ascending: true });
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const normalizedQuestions = (qs ?? []).map((q: any) => ({ ...q, options: q.options as string[] }));
-      setQuestions(normalizedQuestions);
-      setSessionId(s.id);
-      let nextIndex = 0;
-      if (storedParticipantId && normalizedQuestions.length > 0) {
-        const { data: answers, error: answersErr } = await supabase
-          .from("answers")
-          .select("question_id")
-          .eq("session_id", s.id)
-          .eq("participant_id", storedParticipantId);
-
-        if (!answersErr && answers?.length) {
-          const answered = new Set((answers as Array<{ question_id: string }>).map((a) => a.question_id));
-          const firstUnanswered = normalizedQuestions.findIndex((q) => !answered.has(q.id));
-          if (firstUnanswered === -1) {
-            setLoading(false);
-            router.replace(`/quiz/${code}/done`);
-            return;
-          }
-          nextIndex = firstUnanswered;
-        }
-      }
-      setIdx(nextIndex);
-      setPicked(null);
-      setLoading(false);
+    if (initialized || questionsLoading || !questions.length) return;
+    
+    const firstUnanswered = questions.findIndex((q) => !answeredQuestions.has(q.id));
+    
+    if (firstUnanswered === -1 && answeredQuestions.size > 0) {
+      // All questions answered
+      router.replace(`/quiz/${code}/done`);
+      return;
     }
-    load();
-  }, [code, router]);
+    
+    setIdx(firstUnanswered === -1 ? 0 : firstUnanswered);
+    setInitialized(true);
+  }, [questions, answeredQuestions, questionsLoading, initialized, code, router]);
 
+  // Check if session has ended
+  useEffect(() => {
+    if (session?.ended_at) {
+      router.replace(`/quiz/${code}/done`);
+    }
+  }, [session, code, router]);
+
+  // Mobile detection
   useEffect(() => {
     if (typeof window === "undefined") return;
     const media = window.matchMedia("(max-width: 639px)");
@@ -169,6 +148,7 @@ export default function QuizPage() {
     return () => media.removeEventListener("change", update);
   }, []);
 
+  // Scroll hide bar effect
   useEffect(() => {
     if (typeof window === "undefined" || !isMobile || picked !== null) {
       setHideBar(false);
@@ -198,13 +178,13 @@ export default function QuizPage() {
     return () => window.removeEventListener("scroll", onScroll);
   }, [isMobile, picked]);
 
-  const q = questions[idx];
+  const q = questions[idx] as Question | undefined;
   const total = questions.length;
 
-  const canAnswer = useMemo(() => !!q && participantId && sessionId, [q, participantId, sessionId]);
+  const canAnswer = useMemo(() => !!q && (isValidSession || participantId), [q, isValidSession, participantId]);
 
   async function submit() {
-    if (!canAnswer || picked === null) return;
+    if (!canAnswer || picked === null || !q) return;
     setSubmitting(true);
     setStatus("Lagi ngirim jawaban...");
     toast.loading("Mengirim jawaban...", { id: "submit-answer" });
@@ -213,10 +193,11 @@ export default function QuizPage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        participant_id: participantId,
-        session_id: sessionId,
         question_id: q.id,
         answer_index: picked,
+        // Fallback for backward compatibility (will be ignored if cookie exists)
+        participant_id: participantId,
+        session_id: sessionId,
       }),
     });
 
@@ -232,14 +213,22 @@ export default function QuizPage() {
     }
 
     toast.success("Jawaban terkirim!", { id: "submit-answer" });
+    
+    // Refresh answered questions cache
+    await refreshAnswers();
+    
     setPicked(null);
     setStatus(null);
     setSubmitting(false);
-    if (idx + 1 < total) setIdx(idx + 1);
-    else router.push(`/quiz/${code}/done`);
+    
+    if (idx + 1 < total) {
+      setIdx(idx + 1);
+    } else {
+      router.push(`/quiz/${code}/done`);
+    }
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen px-6 py-20 flex justify-center items-center">
         <div className="w-full max-w-md text-center space-y-8">
@@ -254,16 +243,34 @@ export default function QuizPage() {
     );
   }
 
-  if (error) {
+  if (!session) {
     return (
       <div className="min-h-screen px-6 py-20 flex justify-center items-center">
         <div className="w-full max-w-md text-center space-y-8">
           <div className="space-y-4">
             <h1 className="text-4xl sm:text-5xl font-bold text-slate-900">Error</h1>
-            <p className="text-lg text-slate-500">{error}</p>
+            <p className="text-lg text-slate-500">Sesi tidak ketemu. Coba cek kodenya lagi ya.</p>
           </div>
           <Button size="lg" onClick={() => router.push("/join")} className="rounded-full">
             Kembali ke Join
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isValidSession && !participantId) {
+    return (
+      <div className="min-h-screen px-6 py-20 flex justify-center items-center">
+        <div className="w-full max-w-md text-center space-y-8">
+          <div className="space-y-4">
+            <h1 className="text-4xl sm:text-5xl font-bold text-slate-900">Belum Terdaftar</h1>
+            <p className="text-lg text-slate-500">
+              Kamu belum join sesi ini. Silakan join dulu ya.
+            </p>
+          </div>
+          <Button size="lg" onClick={() => router.push(`/join/${code}`)} className="rounded-full">
+            Join Sesi
           </Button>
         </div>
       </div>
@@ -338,7 +345,7 @@ export default function QuizPage() {
               key={index}
               index={index}
               active={index === idx}
-              done={index < idx}
+              done={index < idx || answeredQuestions.has(questions[index]?.id)}
             />
           ))}
         </div>
@@ -388,12 +395,6 @@ export default function QuizPage() {
               </div>
             )}
 
-            {!participantId && (
-              <div className="text-center text-sm text-slate-600 bg-slate-100 rounded-2xl px-6 py-4">
-                Kamu belum terdaftar. Silakan join ulang.
-              </div>
-            )}
-
             <motion.div
               aria-hidden={isMobile && hideBar}
               animate={{ y: isMobile && hideBar ? 96 : 0, opacity: isMobile && hideBar ? 0 : 1 }}
@@ -414,7 +415,7 @@ export default function QuizPage() {
                   size="lg"
                   className="order-1 sm:order-2 w-full sm:flex-1 rounded-full h-14 text-base shadow-lg shadow-slate-900/10"
                   onClick={submit}
-                  disabled={picked === null || !participantId || submitting}
+                  disabled={picked === null || !canAnswer || submitting}
                 >
                   {submitting ? (
                     <span className="inline-flex items-center justify-center gap-2">

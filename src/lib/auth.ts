@@ -4,7 +4,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 // Constants
 const AUTH_COOKIE_NAME = "admin_token";
+const PARTICIPANT_COOKIE_NAME = "participant_session";
 const TOKEN_EXPIRY = "24h";
+const PARTICIPANT_TOKEN_EXPIRY = "7d";
 
 // Get secret key - will throw if not set
 function getSecretKey(): Uint8Array {
@@ -116,6 +118,117 @@ export function unauthorizedResponse(message = "Unauthorized"): NextResponse {
   return NextResponse.json({ error: message }, { status: 401 });
 }
 
+// ============================================
+// PARTICIPANT SESSION MANAGEMENT
+// ============================================
+
+export interface ParticipantTokenPayload extends JWTPayload {
+  participantId: string;
+  sessionCode: string;
+  sessionId: string;
+  iat: number;
+  exp: number;
+}
+
+/**
+ * Generate JWT token for participant
+ */
+export async function generateParticipantToken(
+  participantId: string,
+  sessionCode: string,
+  sessionId: string
+): Promise<string> {
+  const secret = getSecretKey();
+  
+  const token = await new SignJWT({ 
+    participantId, 
+    sessionCode,
+    sessionId 
+  })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime(PARTICIPANT_TOKEN_EXPIRY)
+    .sign(secret);
+  
+  return token;
+}
+
+/**
+ * Verify participant token
+ */
+export async function verifyParticipantToken(token: string): Promise<ParticipantTokenPayload | null> {
+  try {
+    const secret = getSecretKey();
+    const { payload } = await jwtVerify(token, secret);
+    
+    if (!payload.participantId || !payload.sessionCode || !payload.sessionId) {
+      return null;
+    }
+    
+    return payload as ParticipantTokenPayload;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Set participant cookie
+ */
+export async function setParticipantCookie(token: string): Promise<void> {
+  const cookieStore = await cookies();
+  
+  cookieStore.set(PARTICIPANT_COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 7, // 7 days
+  });
+}
+
+/**
+ * Get participant token from cookie
+ */
+export async function getParticipantToken(): Promise<string | null> {
+  const cookieStore = await cookies();
+  return cookieStore.get(PARTICIPANT_COOKIE_NAME)?.value ?? null;
+}
+
+/**
+ * Get participant session from cookie
+ */
+export async function getParticipantSession(): Promise<ParticipantTokenPayload | null> {
+  const token = await getParticipantToken();
+  if (!token) return null;
+  return verifyParticipantToken(token);
+}
+
+/**
+ * Remove participant cookie
+ */
+export async function removeParticipantCookie(): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.delete(PARTICIPANT_COOKIE_NAME);
+}
+
+/**
+ * Get participant from request (for API routes)
+ */
+export function getParticipantTokenFromRequest(request: NextRequest): string | null {
+  return request.cookies.get(PARTICIPANT_COOKIE_NAME)?.value ?? null;
+}
+
+/**
+ * Verify participant from request
+ */
+export async function verifyParticipantRequest(
+  request: NextRequest
+): Promise<ParticipantTokenPayload | null> {
+  const token = getParticipantTokenFromRequest(request);
+  if (!token) return null;
+  return verifyParticipantToken(token);
+}
+
 /**
  * Constant-time string comparison to prevent timing attacks
  */
@@ -136,33 +249,64 @@ export function secureCompare(a: string, b: string): boolean {
   return result === 0;
 }
 
-// Simple in-memory rate limiter
-const loginAttempts = new Map<string, { count: number; resetAt: number }>();
-const MAX_ATTEMPTS = 5;
-const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+// ============================================
+// RATE LIMITER
+// ============================================
 
-/**
- * Check rate limit for login attempts
- */
-export function checkLoginRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
-  const now = Date.now();
-  const record = loginAttempts.get(ip);
-  
-  // Clean up old entries periodically
-  if (loginAttempts.size > 10000) {
-    for (const [key, value] of loginAttempts.entries()) {
+type RateLimitConfig = {
+  maxAttempts: number;
+  windowMs: number;
+};
+
+type RateLimitRecord = { 
+  count: number; 
+  resetAt: number 
+};
+
+// Separate rate limit stores for different purposes
+const rateLimitStores = {
+  login: new Map<string, RateLimitRecord>(),
+  answer: new Map<string, RateLimitRecord>(),
+  join: new Map<string, RateLimitRecord>(),
+};
+
+const RATE_LIMIT_CONFIGS: Record<keyof typeof rateLimitStores, RateLimitConfig> = {
+  login: { maxAttempts: 5, windowMs: 15 * 60 * 1000 },     // 5 per 15 min
+  answer: { maxAttempts: 60, windowMs: 60 * 1000 },        // 60 per minute
+  join: { maxAttempts: 10, windowMs: 60 * 1000 },          // 10 per minute
+};
+
+function cleanupRateLimitStore(store: Map<string, RateLimitRecord>, now: number) {
+  if (store.size > 10000) {
+    for (const [key, value] of store.entries()) {
       if (now > value.resetAt) {
-        loginAttempts.delete(key);
+        store.delete(key);
       }
     }
   }
+}
+
+/**
+ * Generic rate limiter
+ */
+export function checkRateLimit(
+  type: keyof typeof rateLimitStores,
+  identifier: string
+): { allowed: boolean; retryAfter?: number } {
+  const now = Date.now();
+  const store = rateLimitStores[type];
+  const config = RATE_LIMIT_CONFIGS[type];
+  
+  cleanupRateLimitStore(store, now);
+  
+  const record = store.get(identifier);
   
   if (!record || now > record.resetAt) {
-    loginAttempts.set(ip, { count: 1, resetAt: now + WINDOW_MS });
+    store.set(identifier, { count: 1, resetAt: now + config.windowMs });
     return { allowed: true };
   }
   
-  if (record.count >= MAX_ATTEMPTS) {
+  if (record.count >= config.maxAttempts) {
     return { 
       allowed: false, 
       retryAfter: Math.ceil((record.resetAt - now) / 1000) 
@@ -174,9 +318,18 @@ export function checkLoginRateLimit(ip: string): { allowed: boolean; retryAfter?
 }
 
 /**
- * Reset rate limit on successful login
+ * Reset rate limit
  */
-export function resetLoginRateLimit(ip: string): void {
-  loginAttempts.delete(ip);
+export function resetRateLimit(type: keyof typeof rateLimitStores, identifier: string): void {
+  rateLimitStores[type].delete(identifier);
+}
+
+// Legacy aliases for backward compatibility
+export function checkLoginRateLimit(ip: string) {
+  return checkRateLimit("login", ip);
+}
+
+export function resetLoginRateLimit(ip: string) {
+  resetRateLimit("login", ip);
 }
 

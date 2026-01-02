@@ -1,27 +1,19 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import Image from "next/image";
-
-type Row = {
-  participant_id: string;
-  display_name: string;
-  total_points: number;
-  correct_count: number;
-  last_answer_at: string;
-};
+import { useSession, useLeaderboard, type LeaderboardRow } from "@/lib/hooks";
 
 type LeaderboardRowProps = {
-  row: Row;
+  row: LeaderboardRow;
   index: number;
 };
 
-function LeaderboardRow({ row, index }: LeaderboardRowProps) {
+function LeaderboardRowComponent({ row, index }: LeaderboardRowProps) {
   const isTop3 = index < 3;
 
   return (
@@ -50,85 +42,59 @@ export default function ScreenPage() {
   const params = useParams();
   const rawCode = params?.code;
   const code = (Array.isArray(rawCode) ? rawCode[0] : rawCode || "").toUpperCase();
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [endedAt, setEndedAt] = useState<string | null>(null);
-  const [rows, setRows] = useState<Row[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  
+  // Use SWR hooks for caching
+  const { session, isLoading: sessionLoading, error: sessionError } = useSession(code);
+  const { 
+    rows, 
+    isLoading: leaderboardLoading, 
+    error: leaderboardError,
+    refresh: refreshLeaderboard 
+  } = useLeaderboard(session?.id || null);
 
-  async function fetchBoard(sid: string, showToast = false) {
-    if (showToast) {
-      toast.loading("Memuat leaderboard...", { id: "fetch-leaderboard" });
-    }
+  const loading = sessionLoading || leaderboardLoading;
+  const error = sessionError || leaderboardError ? "Data belum bisa dimuat." : null;
 
-    const { data, error: boardErr } = await supabase
-      .from("v_leaderboard")
-      .select("*")
-      .eq("session_id", sid)
-      .order("total_points", { ascending: false })
-      .limit(20);
+  // Set up realtime subscription for live updates
+  useEffect(() => {
+    if (!session?.id) return;
 
-    if (boardErr) {
-      setError("Leaderboard belum bisa dimuat.");
-      if (showToast) {
-        toast.error("Gagal memuat", {
-          id: "fetch-leaderboard",
-          description: "Leaderboard belum bisa dimuat.",
-        });
-      }
-      return;
-    }
+    const channel = supabase
+      .channel(`answers-${session.id}`)
+      .on(
+        "postgres_changes",
+        { 
+          event: "INSERT", 
+          schema: "public", 
+          table: "answers", 
+          filter: `session_id=eq.${session.id}` 
+        },
+        () => {
+          // Debounce refresh to avoid spam
+          setTimeout(() => refreshLeaderboard(), 250);
+        }
+      )
+      .subscribe();
 
-    setError(null);
-    setRows((data as any) ?? []);
-    if (showToast) {
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [session?.id, refreshLeaderboard]);
+
+  function handleRefresh() {
+    toast.loading("Memuat leaderboard...", { id: "fetch-leaderboard" });
+    refreshLeaderboard().then(() => {
       toast.success("Leaderboard dimuat!", {
         id: "fetch-leaderboard",
-        description: `${(data ?? []).length} peserta`,
+        description: `${rows.length} peserta`,
       });
-    }
+    }).catch(() => {
+      toast.error("Gagal memuat", {
+        id: "fetch-leaderboard",
+        description: "Coba lagi nanti",
+      });
+    });
   }
-
-  useEffect(() => {
-    async function init() {
-      if (!code) return;
-      setLoading(true);
-      setError(null);
-      const { data: s } = await supabase.from("sessions").select("*").eq("code", code).single();
-      if (!s) {
-        setError("Sesi belum ketemu.");
-        setLoading(false);
-        return;
-      }
-      setSessionId(s.id);
-      setEndedAt(s.ended_at ?? null);
-      await fetchBoard(s.id);
-      setLoading(false);
-
-      // Realtime: kalau ada jawaban masuk, refetch leaderboard
-      const ch = supabase
-        .channel(`answers-${s.id}`)
-        .on(
-          "postgres_changes",
-          { event: "INSERT", schema: "public", table: "answers", filter: `session_id=eq.${s.id}` },
-          async () => {
-            // debounce kecil biar ga spam
-            setTimeout(() => fetchBoard(s.id), 250);
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(ch);
-      };
-    }
-
-    const cleanupPromise = init();
-    return () => {
-      // best effort
-      cleanupPromise.then((cleanup: any) => cleanup && cleanup());
-    };
-  }, [code]);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white px-6 py-16 sm:py-20">
@@ -153,19 +119,19 @@ export default function ScreenPage() {
                 Leaderboard
               </h1>
               <span className={`inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium ${
-                endedAt ? "bg-slate-200 text-slate-600" : "bg-slate-900 text-white"
+                session?.ended_at ? "bg-slate-200 text-slate-600" : "bg-slate-900 text-white"
               }`}>
-                {endedAt ? "Selesai" : "Live"}
+                {session?.ended_at ? "Selesai" : "Live"}
               </span>
             </div>
             <p className="text-base sm:text-lg text-slate-500">
               Sesi: <span className="font-mono font-semibold text-slate-900">{code}</span>
             </p>
           </div>
-          {sessionId && (
+          {session && (
             <Button
               variant="outline"
-              onClick={() => fetchBoard(sessionId, true)}
+              onClick={handleRefresh}
               className="rounded-full"
             >
               Refresh
@@ -194,7 +160,7 @@ export default function ScreenPage() {
             )}
             {!loading && !error &&
               rows.map((row, index) => (
-                <LeaderboardRow key={row.participant_id} row={row} index={index} />
+                <LeaderboardRowComponent key={row.participant_id} row={row} index={index} />
               ))}
             {!loading && !error && rows.length === 0 && (
               <div className="bg-slate-50 rounded-2xl px-6 py-12 text-center text-sm text-slate-500 border border-dashed border-slate-200">
