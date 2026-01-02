@@ -13,13 +13,13 @@ export default function QuizDonePage() {
   const leaderboardHref = code ? `/screen/${code}` : "/";
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6">
-      <Card className="w-full max-w-lg sticker">
-        <CardContent className="p-6 space-y-4 text-center">
-          <Badge className="bg-white text-foreground border-white sticker">Selesai</Badge>
-          <h1 className="font-display text-3xl">Quiz sudah selesai</h1>
+    <main className="min-h-screen flex items-center justify-center px-6 py-12">
+      <Card className="w-full max-w-lg sticker border border-white/60 bg-white/90">
+        <CardContent className="p-6 sm:p-8 space-y-5 text-center">
+          <Badge className="bg-[#F3F7FF] text-[#4451A3]">Selesai</Badge>
+          <h1 className="text-3xl sm:text-4xl font-semibold text-slate-900">Quiz sudah selesai</h1>
           <p className="text-sm text-muted-foreground">
-            Terima kasih sudah ikut. Kamu bisa lihat leaderboard atau kembali ke home.
+            Terima kasih sudah ikut. Kamu bisa cek leaderboard atau balik ke home.
           </p>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">

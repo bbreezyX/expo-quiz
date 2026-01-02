@@ -64,7 +64,7 @@ export default function AdminPage() {
     const res = await fetch("/api/session/list");
     const json = await readJson(res);
     if (!res.ok) {
-      setStatus(json?.error || "Gagal memuat daftar sesi.");
+      setStatus(json?.error || "Daftar sesi belum bisa dimuat.");
       return;
     }
     setSessions(Array.isArray(json?.sessions) ? json.sessions : []);
@@ -76,12 +76,12 @@ export default function AdminPage() {
     const res = await fetch("/api/session/create", { method: "POST" });
     const json = await readJson(res);
     if (!res.ok) {
-      setStatus(json?.error || "Gagal membuat sesi.");
+      setStatus(json?.error || "Belum bisa bikin sesi.");
       setBusy(false);
       return;
     }
     if (!json?.session) {
-      setStatus("Respons server tidak valid.");
+      setStatus("Respons server belum valid.");
       setBusy(false);
       return;
     }
@@ -96,17 +96,17 @@ export default function AdminPage() {
   async function loadSession() {
     const inputCode = manualCode.trim().toUpperCase();
     if (!inputCode) return;
-    setStatus("Memuat sesi...");
+    setStatus("Lagi memuat sesi...");
     setBusy(true);
     const res = await fetch(`/api/session/${inputCode}`);
     const json = await readJson(res);
     if (!res.ok) {
-      setStatus(json?.error || "Sesi tidak ditemukan.");
+      setStatus(json?.error || "Sesi belum ketemu.");
       setBusy(false);
       return;
     }
     if (!json?.session) {
-      setStatus("Respons server tidak valid.");
+      setStatus("Respons server belum valid.");
       setBusy(false);
       return;
     }
@@ -126,7 +126,7 @@ export default function AdminPage() {
       .order("order_no", { ascending: true });
 
     if (error) {
-      setStatus("Gagal memuat pertanyaan.");
+      setStatus("Pertanyaan belum bisa dimuat.");
       return;
     }
 
@@ -140,7 +140,7 @@ export default function AdminPage() {
 
   async function addQuestion() {
     if (!code) {
-      setStatus("Buat atau muat sesi terlebih dahulu.");
+      setStatus("Buat atau muat sesi dulu ya.");
       return;
     }
     if (endedAt) {
@@ -165,7 +165,7 @@ export default function AdminPage() {
       return;
     }
     if (correctIndex < 0 || correctIndex >= filled.length) {
-      setStatus("Opsi benar tidak valid.");
+      setStatus("Opsi benar belum valid.");
       return;
     }
 
@@ -183,12 +183,12 @@ export default function AdminPage() {
     });
     const json = await readJson(res);
     if (!res.ok) {
-      setStatus(json?.error || "Gagal menambah pertanyaan.");
+      setStatus(json?.error || "Belum bisa menambah pertanyaan.");
       setBusy(false);
       return;
     }
     if (!json?.question) {
-      setStatus("Respons server tidak valid.");
+      setStatus("Respons server belum valid.");
       setBusy(false);
       return;
     }
@@ -213,12 +213,12 @@ export default function AdminPage() {
     });
     const json = await readJson(res);
     if (!res.ok) {
-      setStatus(json?.error || "Gagal mengakhiri sesi.");
+      setStatus(json?.error || "Belum bisa mengakhiri sesi.");
       setBusy(false);
       return;
     }
     if (!json?.session) {
-      setStatus("Respons server tidak valid.");
+      setStatus("Respons server belum valid.");
       setBusy(false);
       return;
     }
@@ -241,28 +241,36 @@ export default function AdminPage() {
   const joinUrl = code && origin ? `${origin}/join/${code}` : "";
   const screenUrl = code && origin ? `${origin}/screen/${code}` : "";
 
+  const badgeTone = code
+    ? endedAt
+      ? "bg-[#FFF6DB] text-[#6C4B00]"
+      : "bg-[#E9F7F0] text-[#2D7A56]"
+    : "bg-[#F6F8FF] text-[#4451A3]";
+
   return (
-    <main className="min-h-screen px-6 py-10">
-      <div className="mx-auto max-w-6xl space-y-8">
+    <main className="min-h-screen px-6 py-12 sm:px-8 lg:px-10">
+      <div className="mx-auto max-w-6xl space-y-10">
         <header className="text-center space-y-3">
-          <Badge className="bg-white text-foreground border-white sticker">Admin</Badge>
-          <h1 className="font-display text-4xl sm:text-5xl">Pusat Kontrol Expo Quiz</h1>
+          <Badge className="bg-[#F3F7FF] text-[#4451A3]">Admin</Badge>
+          <h1 className="text-4xl sm:text-5xl font-semibold text-slate-900">
+            Dashboard Admin Expo Quiz
+          </h1>
           <p className="text-muted-foreground">
-            Buat sesi, bagikan kode, dan susun pertanyaan untuk peserta.
+            Bikin sesi, bagi kode, dan susun pertanyaan dengan rapi.
           </p>
         </header>
 
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-          <Card className="sticker">
-            <CardContent className="p-6 space-y-4">
-              <div className="flex items-center justify-between">
+          <Card className="sticker border border-white/60 bg-white/90">
+            <CardContent className="p-6 space-y-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="space-y-1">
-                  <div className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                  <div className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
                     Sesi
                   </div>
-                  <h2 className="font-display text-2xl">Buat atau muat sesi</h2>
+                  <h2 className="text-2xl font-semibold text-slate-900">Buat atau muat sesi</h2>
                 </div>
-                <Badge className="bg-white text-foreground border-white sticker">
+                <Badge className={badgeTone}>
                   {code ? (endedAt ? "Selesai" : "Aktif") : "Belum ada"}
                 </Badge>
               </div>
@@ -276,7 +284,7 @@ export default function AdminPage() {
                     value={manualCode}
                     onChange={(e) => setManualCode(e.target.value.toUpperCase())}
                     placeholder="Masukkan kode sesi"
-                    className="uppercase"
+                    className="uppercase bg-white"
                   />
                   <Button variant="outline" onClick={loadSession} disabled={busy} size="lg">
                     Muat
@@ -285,7 +293,7 @@ export default function AdminPage() {
               </div>
 
               {code && (
-                <div className="space-y-3 rounded-2xl border-2 border-white bg-white p-4 text-sm">
+                <div className="space-y-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
                       Kode: <span className="font-mono font-semibold">{code}</span>
@@ -310,7 +318,7 @@ export default function AdminPage() {
                   </div>
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="text-xs text-muted-foreground">
-                      {endedAt ? "Sesi sudah selesai." : "Sesi sedang berjalan."}
+                      {endedAt ? "Sesi sudah selesai." : "Sesi lagi berjalan."}
                     </div>
                     {!endedAt && (
                       <Button size="sm" variant="outline" onClick={endSession} disabled={busy}>
@@ -321,20 +329,24 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {status && <div className="text-sm text-muted-foreground">{status}</div>}
+              {status && (
+                <div className="rounded-2xl bg-[#F6F8FF] px-4 py-3 text-sm text-slate-600">
+                  {status}
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          <Card className="sticker">
-            <CardContent className="p-6 space-y-4">
+          <Card className="sticker border border-white/60 bg-white/90">
+            <CardContent className="p-6 space-y-5">
               <div className="space-y-1">
-                <div className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                <div className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
                   Pertanyaan
                 </div>
-                <h2 className="font-display text-2xl">Tambah pertanyaan</h2>
+                <h2 className="text-2xl font-semibold text-slate-900">Tambah pertanyaan</h2>
               </div>
               {endedAt && (
-                <div className="text-xs text-muted-foreground">
+                <div className="rounded-2xl bg-[#FFF6DB] px-4 py-3 text-xs text-[#6C4B00]">
                   Sesi sudah selesai. Pertanyaan tidak bisa ditambah.
                 </div>
               )}
@@ -344,7 +356,7 @@ export default function AdminPage() {
                 onChange={(e) => setQuestionText(e.target.value)}
                 placeholder="Tulis pertanyaan di sini..."
                 disabled={busy || !code || !!endedAt}
-                className="min-h-[140px] w-full rounded-2xl border-2 border-white bg-white px-4 py-3 text-sm shadow-[0_14px_26px_-18px_rgba(15,23,42,0.5)] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+                className="min-h-[140px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
               />
 
               <div className="grid gap-3 sm:grid-cols-2">
@@ -355,20 +367,21 @@ export default function AdminPage() {
                     onChange={(e) => updateOption(i, e.target.value)}
                     placeholder={`Opsi ${i + 1}`}
                     disabled={busy || !code || !!endedAt}
+                    className="bg-white border-slate-200"
                   />
                 ))}
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1">
-                  <label className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                  <label className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
                     Opsi benar
                   </label>
                   <select
                     value={String(correctIndex)}
                     onChange={(e) => setCorrectIndex(Number(e.target.value))}
                     disabled={busy || !code || !!endedAt}
-                    className="h-12 w-full rounded-2xl border-2 border-white bg-white px-3 text-sm shadow-[0_14px_26px_-18px_rgba(15,23,42,0.5)] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+                    className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm shadow-sm outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                   >
                     {options.map((_, i) => (
                       <option key={i} value={i}>
@@ -379,7 +392,7 @@ export default function AdminPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                  <label className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
                     Poin
                   </label>
                   <Input
@@ -388,25 +401,26 @@ export default function AdminPage() {
                     onChange={(e) => setPoints(Number(e.target.value))}
                     min={0}
                     disabled={busy || !code || !!endedAt}
+                    className="bg-white border-slate-200"
                   />
                 </div>
               </div>
 
-              <Button onClick={addQuestion} disabled={busy || !code || !!endedAt}>
+              <Button onClick={addQuestion} disabled={busy || !code || !!endedAt} size="lg">
                 Tambah Pertanyaan
               </Button>
             </CardContent>
           </Card>
         </div>
 
-        <Card className="sticker">
+        <Card className="sticker border border-white/60 bg-white/90">
           <CardContent className="p-6 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="space-y-1">
-                <div className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-                  Riwayat Sesi
+                <div className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
+                  Riwayat sesi
                 </div>
-                <h2 className="font-display text-2xl">Sesi terakhir</h2>
+                <h2 className="text-2xl font-semibold text-slate-900">Sesi terakhir</h2>
               </div>
               <Button variant="outline" onClick={loadSessions} disabled={busy}>
                 Muat ulang
@@ -417,10 +431,10 @@ export default function AdminPage() {
               {sessions.map((s) => (
                 <div
                   key={s.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-white bg-white px-4 py-3 text-sm"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm"
                 >
                   <div className="space-y-1">
-                    <div className="font-semibold">{s.title}</div>
+                    <div className="font-semibold text-slate-900">{s.title}</div>
                     <div className="text-xs text-muted-foreground">
                       Kode: <span className="font-mono">{s.code}</span>
                     </div>
@@ -443,7 +457,7 @@ export default function AdminPage() {
                 </div>
               ))}
               {sessions.length === 0 && (
-                <div className="rounded-xl border border-dashed border-white/60 bg-white/50 p-6 text-sm text-muted-foreground">
+                <div className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-6 text-sm text-muted-foreground">
                   Belum ada sesi tersimpan.
                 </div>
               )}
@@ -451,16 +465,16 @@ export default function AdminPage() {
           </CardContent>
         </Card>
 
-        <Card className="sticker">
+        <Card className="sticker border border-white/60 bg-white/90">
           <CardContent className="p-6 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="space-y-1">
-                <div className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-                  Bank Pertanyaan
+                <div className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
+                  Bank pertanyaan
                 </div>
-                <h2 className="font-display text-2xl">Daftar pertanyaan</h2>
+                <h2 className="text-2xl font-semibold text-slate-900">Daftar pertanyaan</h2>
               </div>
-              <Badge className="bg-white/70 text-foreground border-white/60">
+              <Badge className="bg-[#F6F8FF] text-[#4451A3] border border-[#D4DDF5]">
                 {questions.length} item
               </Badge>
             </div>
@@ -469,32 +483,31 @@ export default function AdminPage() {
               {questions.map((q) => (
                 <div
                   key={q.id}
-                  className="rounded-2xl border border-white/60 bg-white/70 p-4 shadow-sm"
+                  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
                 >
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <div>Q{q.order_no}</div>
                     <div>{q.points} poin</div>
                   </div>
-                  <div className="mt-2 text-lg font-semibold">{q.question}</div>
+                  <div className="mt-2 text-lg font-semibold text-slate-900">{q.question}</div>
                   <div className="mt-3 grid gap-2 sm:grid-cols-2">
                     {q.options.map((opt, i) => {
                       const palette = [
-                        "bg-[var(--brand-red)] text-white",
-                        "bg-[var(--brand-blue)] text-white",
-                        "bg-[var(--brand-yellow)] text-[#1f2937]",
-                        "bg-[var(--brand-green)] text-white",
+                        "bg-[#FFE9EC] text-[#8B2C3B]",
+                        "bg-[#EAF1FF] text-[#2D4C9B]",
+                        "bg-[#FFF6DB] text-[#7A5A16]",
+                        "bg-[#E9F7F0] text-[#2D7A56]",
                       ];
                       const paletteIndex = i % palette.length;
                       const tone = palette[paletteIndex];
-                      const labelTone = paletteIndex === 2 ? "text-[#1f2937]/70" : "text-white/80";
                       return (
                         <div
                           key={`${q.id}-${i}`}
-                          className={`rounded-2xl px-3 py-3 text-sm ${tone} ${
-                            i === q.correct_index ? "ring-4 ring-white/80" : ""
+                          className={`rounded-2xl px-3 py-3 text-sm border border-white/70 ${tone} ${
+                            i === q.correct_index ? "ring-2 ring-[#B6C8FF]" : ""
                           }`}
                         >
-                          <div className={`text-[10px] uppercase tracking-[0.2em] ${labelTone}`}>
+                          <div className="text-[10px] uppercase tracking-[0.2em] text-slate-600">
                             Opsi {i + 1}
                           </div>
                           <div className="font-medium">{opt}</div>
@@ -505,7 +518,7 @@ export default function AdminPage() {
                 </div>
               ))}
               {questions.length === 0 && (
-                <div className="rounded-xl border border-dashed border-white/60 bg-white/50 p-6 text-sm text-muted-foreground">
+                <div className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-6 text-sm text-muted-foreground">
                   Belum ada pertanyaan. Tambahkan dari form di atas.
                 </div>
               )}

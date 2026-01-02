@@ -27,7 +27,7 @@ export default function JoinPage() {
     const json = await res.json();
     if (!res.ok) {
       setLoading(false);
-      return setErr(json.error || "Failed");
+      return setErr(json.error || "Gagal masuk");
     }
 
     localStorage.setItem(`participant:${code}`, json.participant.id);
@@ -37,40 +37,43 @@ export default function JoinPage() {
   }
 
   return (
-    <div className="min-h-screen p-6 flex justify-center items-center">
-      <div className="w-full max-w-lg">
-        <Card className="sticker">
-          <CardContent className="p-6 space-y-5">
-            <div className="text-center space-y-3">
-              <Badge className="bg-white text-foreground border-white sticker">Peserta</Badge>
-              <h1 className="font-display text-3xl">Masuk Quiz</h1>
-              <div className="text-sm text-muted-foreground">Sesi: {code}</div>
-            </div>
+    <main className="min-h-screen px-6 py-12 flex items-center justify-center">
+      <Card className="w-full max-w-lg sticker border border-white/60 bg-white/90">
+        <CardContent className="p-6 sm:p-8 space-y-6">
+          <div className="text-center space-y-3">
+            <Badge className="bg-[#F3F7FF] text-[#4451A3]">Peserta</Badge>
+            <h1 className="text-3xl sm:text-4xl font-semibold text-slate-900">Siap ikut quiz?</h1>
+            <div className="text-sm text-muted-foreground">Sesi: {code}</div>
+          </div>
 
-            <div className="space-y-2">
-              <Input
-                placeholder="Nama (singkat)"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-              {err && <div className="text-sm text-red-600">{err}</div>}
-            </div>
-
-            <div className="grid gap-2 sm:grid-cols-2">
-              <div className="rounded-2xl bg-[var(--brand-green)] px-4 py-3 text-xs font-semibold text-white">
-                Dapatkan poin tertinggi
+          <div className="space-y-2">
+            <Input
+              placeholder="Nama singkat"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="bg-white"
+            />
+            {err && (
+              <div className="rounded-2xl bg-[#FFF4F4] px-4 py-2 text-sm text-slate-600">
+                {err}
               </div>
-              <div className="rounded-2xl bg-[var(--brand-red)] px-4 py-3 text-xs font-semibold text-white">
-                Jawab secepat mungkin
-              </div>
-            </div>
+            )}
+          </div>
 
-            <Button className="w-full" onClick={join} disabled={name.trim().length < 2 || loading}>
-              {loading ? "Memproses..." : "Mulai"}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl border border-[#CFEBDD] bg-[#E9F7F0] px-4 py-3 text-xs font-semibold text-[#2D7A56]">
+              Dapatkan poin tertinggi
+            </div>
+            <div className="rounded-2xl border border-[#F7C9D1] bg-[#FFE9EC] px-4 py-3 text-xs font-semibold text-[#8B2C3B]">
+              Jawab secepat mungkin
+            </div>
+          </div>
+
+          <Button className="w-full" onClick={join} disabled={name.trim().length < 2 || loading}>
+            {loading ? "Memproses..." : "Mulai"}
+          </Button>
+        </CardContent>
+      </Card>
+    </main>
   );
 }

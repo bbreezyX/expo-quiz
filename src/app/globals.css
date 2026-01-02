@@ -49,24 +49,24 @@
 
 :root {
   --radius: 1.25rem;
-  --background: oklch(0.99 0.02 90);
-  --foreground: oklch(0.16 0.03 45);
-  --card: oklch(1 0.01 90);
-  --card-foreground: oklch(0.16 0.03 45);
-  --popover: oklch(1 0.01 90);
-  --popover-foreground: oklch(0.16 0.03 45);
-  --primary: oklch(0.69 0.21 30);
-  --primary-foreground: oklch(0.99 0.02 90);
-  --secondary: oklch(0.9 0.07 210);
-  --secondary-foreground: oklch(0.16 0.03 45);
-  --muted: oklch(0.95 0.02 90);
-  --muted-foreground: oklch(0.45 0.04 60);
-  --accent: oklch(0.9 0.08 120);
-  --accent-foreground: oklch(0.16 0.03 45);
+  --background: oklch(0.98 0.01 90);
+  --foreground: oklch(0.25 0.02 270);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.25 0.02 270);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.25 0.02 270);
+  --primary: oklch(0.55 0.18 270);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.94 0.02 270);
+  --secondary-foreground: oklch(0.25 0.02 270);
+  --muted: oklch(0.96 0.01 270);
+  --muted-foreground: oklch(0.55 0.03 270);
+  --accent: oklch(0.94 0.03 270);
+  --accent-foreground: oklch(0.25 0.02 270);
   --destructive: oklch(0.62 0.23 28);
-  --border: oklch(0.86 0.05 90);
-  --input: oklch(0.96 0.02 90);
-  --ring: oklch(0.78 0.12 40);
+  --border: oklch(0.92 0.01 270);
+  --input: oklch(0.96 0.01 270);
+  --ring: oklch(0.75 0.1 270);
   --chart-1: oklch(0.69 0.21 30);
   --chart-2: oklch(0.64 0.16 220);
   --chart-3: oklch(0.6 0.19 140);
@@ -80,11 +80,12 @@
   --sidebar-accent-foreground: oklch(0.16 0.03 45);
   --sidebar-border: oklch(0.86 0.05 90);
   --sidebar-ring: oklch(0.78 0.12 40);
-  --brand-red: #ff4d4f;
-  --brand-orange: #ff9f1c;
-  --brand-blue: #2f80ed;
-  --brand-yellow: #f2c94c;
-  --brand-green: #27ae60;
+  --brand-red: #FF6B7A;
+  --brand-orange: #FFB366;
+  --brand-blue: #6B9EFF;
+  --brand-yellow: #FFD666;
+  --brand-green: #66D9A6;
+  --brand-purple: #B794F6;
 }
 
 .dark {
@@ -129,10 +130,10 @@
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
     background-image:
-      radial-gradient(60% 50% at 0% 0%, rgba(255, 77, 79, 0.28), transparent 60%),
-      radial-gradient(55% 45% at 100% 5%, rgba(47, 128, 237, 0.28), transparent 60%),
-      radial-gradient(50% 55% at 50% 100%, rgba(255, 201, 76, 0.35), transparent 65%),
-      linear-gradient(180deg, #fff7e6 0%, #fffaf0 100%);
+      radial-gradient(60% 50% at 0% 0%, rgba(183, 148, 246, 0.12), transparent 60%),
+      radial-gradient(55% 45% at 100% 5%, rgba(107, 158, 255, 0.12), transparent 60%),
+      radial-gradient(50% 55% at 50% 100%, rgba(102, 217, 166, 0.12), transparent 65%),
+      linear-gradient(180deg, #FAFBFF 0%, #F8F9FF 100%);
     background-attachment: fixed;
     min-height: 100%;
   }
@@ -148,8 +149,9 @@
   }
   .sticker {
     box-shadow:
-      0 18px 40px -28px rgba(15, 23, 42, 0.55),
-      0 2px 0 0 rgba(255, 255, 255, 0.85) inset;
+      0 2px 12px -4px rgba(107, 114, 128, 0.08),
+      0 8px 24px -8px rgba(107, 114, 128, 0.12),
+      0 1px 0 0 rgba(255, 255, 255, 0.95) inset;
   }
 }
 

@@ -13,15 +13,26 @@ async function joinByCode(formData: FormData) {
 }
 
 export default function JoinIndexPage() {
+  const tips = [
+    {
+      text: "Siapkan kode dari admin",
+      tone: "bg-[#F6F8FF] text-[#2D3A6A] border border-[#D4DDF5]",
+    },
+    {
+      text: "Jawab cepat, skor langsung",
+      tone: "bg-[#E9F7F0] text-[#2D7A56] border border-[#CFEBDD]",
+    },
+  ];
+
   return (
-    <main className="min-h-screen flex items-center justify-center p-6">
-      <Card className="w-full max-w-lg sticker">
-        <CardContent className="p-6 space-y-5">
+    <main className="min-h-screen flex items-center justify-center px-6 py-12">
+      <Card className="w-full max-w-lg sticker border border-white/60 bg-white/90">
+        <CardContent className="p-6 sm:p-8 space-y-6">
           <div className="space-y-3 text-center">
-            <Badge className="bg-white text-foreground border-white sticker">Masuk</Badge>
-            <h1 className="font-display text-3xl">Masuk ke sesi quiz</h1>
+            <Badge className="bg-[#F3F7FF] text-[#4451A3]">Masuk</Badge>
+            <h1 className="text-3xl sm:text-4xl font-semibold text-slate-900">Masuk ke sesi quiz</h1>
             <p className="text-sm text-muted-foreground">
-              Masukkan kode sesi dari admin untuk mulai menjawab.
+              Masukkan kode sesi dari admin untuk mulai jawab pertanyaan.
             </p>
           </div>
 
@@ -29,7 +40,7 @@ export default function JoinIndexPage() {
             <Input
               name="code"
               placeholder="Kode sesi (contoh: JMB42)"
-              className="uppercase"
+              className="uppercase bg-white"
               autoComplete="off"
             />
             <Button type="submit" className="sm:w-36">
@@ -37,13 +48,12 @@ export default function JoinIndexPage() {
             </Button>
           </form>
 
-          <div className="grid gap-2 sm:grid-cols-2">
-            <div className="rounded-2xl bg-[var(--brand-yellow)] px-4 py-3 text-xs font-semibold text-[#1f2937]">
-              Siapkan kode dari admin
-            </div>
-            <div className="rounded-2xl bg-[var(--brand-blue)] px-4 py-3 text-xs font-semibold text-white">
-              Jawab cepat, skor langsung
-            </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {tips.map((item) => (
+              <div key={item.text} className={`rounded-2xl px-4 py-3 text-xs font-semibold ${item.tone}`}>
+                {item.text}
+              </div>
+            ))}
           </div>
 
           <Button variant="outline" asChild className="w-full">
