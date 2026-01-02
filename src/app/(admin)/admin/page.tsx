@@ -82,7 +82,7 @@ function InfoBox({ label, value, onCopy }: { label: string; value: string; onCop
 
 export default function AdminPage() {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Auth is now handled by middleware - if user reaches this page, they are authenticated
   const [code, setCode] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [endedAt, setEndedAt] = useState<string | null>(null);
@@ -121,36 +121,12 @@ export default function AdminPage() {
   }, [readJson]);
 
   // Set origin on mount (client-side only)
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setOrigin(window.location.origin);
   }, []);
 
-  // Auth check - check authentication status on mount
+  // Load sessions on mount
   useEffect(() => {
-    const authenticated = localStorage.getItem("admin_authenticated");
-    const authTime = localStorage.getItem("admin_auth_time");
-
-    if (authenticated && authTime) {
-      const timeDiff = Date.now() - parseInt(authTime);
-      const hoursDiff = timeDiff / (1000 * 60 * 60);
-
-      if (hoursDiff < 24) {
-        setIsAuthenticated(true);
-      } else {
-        localStorage.removeItem("admin_authenticated");
-        localStorage.removeItem("admin_auth_time");
-        router.push("/admin/login");
-      }
-    } else {
-      router.push("/admin/login");
-    }
-  }, [router]);
-  /* eslint-enable react-hooks/set-state-in-effect */
-
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
     let cancelled = false;
 
     (async () => {
@@ -169,7 +145,7 @@ export default function AdminPage() {
     return () => {
       cancelled = true;
     };
-  }, [isAuthenticated, readJson]);
+  }, [readJson]);
 
   async function createSession() {
     setStatus(null);
@@ -520,22 +496,14 @@ export default function AdminPage() {
 
   const sessionStatus = code ? (endedAt ? "ended" : "active") : "none";
 
-  function handleLogout() {
-    localStorage.removeItem("admin_authenticated");
-    localStorage.removeItem("admin_auth_time");
-    toast.success("Logout berhasil");
-    router.push("/admin/login");
-  }
-
-  // Show loading while checking auth
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="text-lg text-slate-500">Memuat...</div>
-        </div>
-      </div>
-    );
+  async function handleLogout() {
+    try {
+      await fetch("/api/admin/logout", { method: "POST" });
+      toast.success("Logout berhasil");
+      router.push("/admin/login");
+    } catch {
+      toast.error("Gagal logout");
+    }
   }
 
   return (
