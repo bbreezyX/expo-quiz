@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
-export default function AdminLoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [passcode, setPasscode] = useState("");
@@ -66,49 +66,61 @@ export default function AdminLoginPage() {
   // Show loading while checking auth
   if (checking) {
     return (
-      <main className="min-h-screen flex items-center justify-center px-6 py-20">
-        <div className="text-lg text-slate-500">Memuat...</div>
-      </main>
+      <div className="text-lg text-slate-500">Memuat...</div>
     );
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-6 py-20">
-      <div className="w-full max-w-md space-y-12">
-        <div className="text-center space-y-6">
-          <h1 className="text-5xl sm:text-6xl font-bold text-slate-900">
-            Admin Login
-          </h1>
-          <p className="text-lg text-slate-500">
-            Masukkan passcode untuk akses dashboard
-          </p>
+    <div className="w-full max-w-md space-y-12">
+      <div className="text-center space-y-6">
+        <h1 className="text-5xl sm:text-6xl font-bold text-slate-900">
+          Admin Login
+        </h1>
+        <p className="text-lg text-slate-500">
+          Masukkan passcode untuk akses dashboard
+        </p>
+      </div>
+
+      <form onSubmit={handleLogin} className="space-y-6">
+        <div className="space-y-3">
+          <label className="block text-sm font-medium text-slate-700">
+            Passcode
+          </label>
+          <Input
+            type="password"
+            placeholder="Masukkan passcode"
+            value={passcode}
+            onChange={(e) => setPasscode(e.target.value)}
+            className="text-center text-lg h-14 rounded-full border-slate-200"
+            autoFocus
+          />
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div className="space-y-3">
-            <label className="block text-sm font-medium text-slate-700">
-              Passcode
-            </label>
-            <Input
-              type="password"
-              placeholder="Masukkan passcode"
-              value={passcode}
-              onChange={(e) => setPasscode(e.target.value)}
-              className="text-center text-lg h-14 rounded-full border-slate-200"
-              autoFocus
-            />
-          </div>
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full rounded-full h-14 text-base"
+          disabled={!passcode.trim() || loading}
+        >
+          {loading ? "Memproses..." : "Masuk"}
+        </Button>
+      </form>
+    </div>
+  );
+}
 
-          <Button
-            type="submit"
-            size="lg"
-            className="w-full rounded-full h-14 text-base"
-            disabled={!passcode.trim() || loading}
-          >
-            {loading ? "Memproses..." : "Masuk"}
-          </Button>
-        </form>
-      </div>
+function LoadingFallback() {
+  return (
+    <div className="text-lg text-slate-500">Memuat...</div>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <main className="min-h-screen flex items-center justify-center px-6 py-20">
+      <Suspense fallback={<LoadingFallback />}>
+        <LoginForm />
+      </Suspense>
     </main>
   );
 }
