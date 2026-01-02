@@ -229,6 +229,7 @@ export default function QuizPage() {
       return;
     }
 
+    toast.success("Jawaban terkirim!", { id: "submit-answer" });
     setPicked(null);
     setStatus(null);
     setSubmitting(false);
