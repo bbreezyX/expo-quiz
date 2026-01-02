@@ -1,52 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Expo Quiz
 
-## Getting Started
+Aplikasi live quiz untuk acara atau pameran, lengkap dengan manajemen sesi, jawaban peserta, dan leaderboard realtime.
 
-### Supabase setup (required)
+## Fitur Utama
 
-1) Create a Supabase project.
-2) Run the SQL schema in `supabase/schema.sql` inside the Supabase SQL editor.
-3) Add your keys in `.env.local`:
+- Buat, kelola, dan akhiri sesi quiz dari halaman admin.
+- Peserta gabung menggunakan kode sesi atau QR.
+- Kirim jawaban dan simpan skor ke Supabase.
+- Leaderboard realtime melalui Supabase Realtime.
+- Layar publik untuk menampilkan leaderboard.
+
+## Teknologi
+
+- Next.js (App Router)
+- Supabase (Database + Realtime)
+- Tailwind CSS
+- TypeScript
+
+## Persyaratan
+
+- Node.js
+- Akun Supabase
+
+## Setup Supabase (wajib)
+
+1) Buat project Supabase.
+2) Jalankan schema di `supabase/schema.sql` melalui SQL editor.
+3) Isi `.env.local`:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=your_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_key
 ```
 
-Notes:
-- For local testing, you can disable RLS or add policies to allow `select/insert` on the tables above.
-- Enable Realtime for `answers` if you want live leaderboard updates.
-- If you already created tables before, add the new column: `alter table sessions add column if not exists ended_at timestamptz;`.
+Catatan:
+- Untuk testing lokal, kamu bisa menonaktifkan RLS atau menambahkan policy `select/insert`.
+- Aktifkan Realtime untuk tabel `answers` agar leaderboard live.
+- Jika tabel sudah ada, tambahkan kolom: `alter table sessions add column if not exists ended_at timestamptz;`.
 
-First, run the development server:
+## Menjalankan Lokal
+
+1) Install dependency:
+
+```bash
+npm install
+```
+
+2) Jalankan dev server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3) Buka http://localhost:3000.
 
-You can start editing the page by modifying `src/app/(public)/page.tsx`. The page auto-updates as you edit the file.
+## Rute Penting
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load Space Grotesk and Bungee.
+- `/` halaman landing dan form join.
+- `/admin` halaman admin untuk sesi dan pertanyaan.
+- `/join/[code]` proses join peserta berdasarkan kode.
+- `/quiz/[code]` halaman quiz peserta.
+- `/screen/[code]` layar leaderboard publik.
 
-## Learn More
+## Skrip
 
-To learn more about Next.js, take a look at the following resources:
+- `npm run dev` jalankan dev server.
+- `npm run build` build production.
+- `npm run start` jalankan server production.
+- `npm run lint` linting.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploy
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Rekomendasi deploy di Vercel atau platform lain yang mendukung Next.js. Pastikan environment variables Supabase sudah terisi.
