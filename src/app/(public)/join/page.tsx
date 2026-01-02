@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import JoinSubmitButton from "./join-submit-button";
+import Image from "next/image";
 
 async function joinByCode(formData: FormData) {
   "use server";
@@ -16,10 +17,23 @@ export default function JoinIndexPage() {
     <main className="min-h-screen flex items-center justify-center px-6 py-20">
       <div className="w-full max-w-md space-y-12">
         <div className="text-center space-y-6">
-          <h1 className="text-5xl sm:text-6xl font-bold text-slate-900">
+          {/* Logo */}
+          <div className="flex justify-center">
+            <div className="relative w-24 h-24 sm:w-28 sm:h-28">
+              <Image
+                src="/logo1.png"
+                alt="Expo Quiz Logo"
+                fill
+                className="object-contain"
+                priority
+              />
+            </div>
+          </div>
+
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900">
             Join Quiz
           </h1>
-          <p className="text-lg text-slate-500">
+          <p className="text-base sm:text-lg text-slate-500">
             Masukkan kode sesi dari admin
           </p>
         </div>

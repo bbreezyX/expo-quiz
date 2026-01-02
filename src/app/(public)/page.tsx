@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import Image from "next/image";
 
 export default function HomePage() {
   async function joinByCode(formData: FormData) {
@@ -16,12 +17,25 @@ export default function HomePage() {
       <div className="mx-auto w-full max-w-4xl space-y-24">
         {/* Hero Section */}
         <div className="text-center space-y-10">
-          <div className="space-y-6">
-            <h1 className="text-6xl sm:text-7xl lg:text-8xl font-bold tracking-tight text-slate-900">
-              Expo Quiz
+          <div className="space-y-8">
+            {/* Logo */}
+            <div className="flex justify-center">
+              <div className="relative w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40">
+                <Image
+                  src="/logo1.png"
+                  alt="Expo Quiz Logo"
+                  fill
+                  className="object-contain"
+                  priority
+                />
+              </div>
+            </div>
+
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight text-slate-900">
+              Festival Quiz
             </h1>
-            <p className="text-xl sm:text-2xl text-slate-500 max-w-2xl mx-auto font-light">
-              Quiz interaktif untuk event, kelas, dan pameran
+            <p className="text-lg sm:text-xl lg:text-2xl text-slate-500 max-w-2xl mx-auto font-light">
+              Dinas Energi dan Sumber Daya Mineral Provinsi Jambi
             </p>
           </div>
         </div>
@@ -30,13 +44,12 @@ export default function HomePage() {
         <div className="max-w-md mx-auto space-y-8">
           <div className="text-center space-y-3">
             <h2 className="text-2xl font-semibold text-slate-900">Gabung Sesi</h2>
-            <p className="text-slate-500">Masukkan kode dari admin</p>
           </div>
 
           <form action={joinByCode} className="space-y-4">
             <Input
               name="code"
-              placeholder="Kode"
+              placeholder="Masukkan kode sesi"
               className="text-center text-lg h-14 rounded-full border-slate-200 bg-white"
               autoComplete="off"
             />

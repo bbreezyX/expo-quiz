@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
+import Image from "next/image";
 
 type Question = {
   id: string;
@@ -293,13 +294,26 @@ export default function QuizPage() {
   const answerOptions = [...q.options, "Semua jawaban di atas benar"];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white px-4 pt-12 pb-28 sm:px-6 sm:py-12">
-      <div className="mx-auto max-w-3xl space-y-12">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white px-4 pt-8 pb-28 sm:px-6 sm:pt-12 sm:pb-12">
+      <div className="mx-auto max-w-3xl space-y-8 sm:space-y-12">
+        {/* Logo - Small */}
+        <div className="flex justify-center">
+          <div className="relative w-16 h-16 sm:w-20 sm:h-20">
+            <Image
+              src="/logo1.png"
+              alt="Expo Quiz Logo"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
+        </div>
+
         {/* Header */}
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center gap-2">
-            <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">Quiz</h1>
-            <span className="font-mono text-lg text-slate-500">{code}</span>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900">Quiz</h1>
+            <span className="font-mono text-base sm:text-lg text-slate-500">{code}</span>
           </div>
           <div className="flex items-center justify-center gap-4 max-w-md mx-auto">
             <div className="flex-1 h-2 rounded-full bg-slate-200 overflow-hidden">

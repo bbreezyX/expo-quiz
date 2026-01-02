@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 
 export default function QuizDonePage() {
   const params = useParams();
@@ -14,10 +15,23 @@ export default function QuizDonePage() {
     <main className="min-h-screen flex items-center justify-center px-6 py-20">
       <div className="w-full max-w-md text-center space-y-12">
         <div className="space-y-6">
-          <h1 className="text-5xl sm:text-6xl font-bold text-slate-900">
+          {/* Logo */}
+          <div className="flex justify-center">
+            <div className="relative w-24 h-24 sm:w-28 sm:h-28">
+              <Image
+                src="/logo1.png"
+                alt="Expo Quiz Logo"
+                fill
+                className="object-contain"
+                priority
+              />
+            </div>
+          </div>
+
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900">
             Selesai!
           </h1>
-          <p className="text-lg text-slate-500 max-w-sm mx-auto">
+          <p className="text-base sm:text-lg text-slate-500 max-w-sm mx-auto">
             Terima kasih sudah ikut quiz
           </p>
         </div>

@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import Image from "next/image";
 
 type Row = {
   participant_id: string;
@@ -131,19 +132,32 @@ export default function ScreenPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white px-6 py-16 sm:py-20">
       <div className="max-w-4xl mx-auto space-y-12">
+        {/* Logo */}
+        <div className="flex justify-center">
+          <div className="relative w-20 h-20 sm:w-24 sm:h-24">
+            <Image
+              src="/logo1.png"
+              alt="Expo Quiz Logo"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
+        </div>
+
         <div className="flex flex-wrap items-center justify-between gap-6">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <h1 className="text-4xl sm:text-5xl font-bold text-slate-900">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900">
                 Leaderboard
               </h1>
-              <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-xs font-medium ${
+              <span className={`inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium ${
                 endedAt ? "bg-slate-200 text-slate-600" : "bg-slate-900 text-white"
               }`}>
                 {endedAt ? "Selesai" : "Live"}
               </span>
             </div>
-            <p className="text-lg text-slate-500">
+            <p className="text-base sm:text-lg text-slate-500">
               Sesi: <span className="font-mono font-semibold text-slate-900">{code}</span>
             </p>
           </div>

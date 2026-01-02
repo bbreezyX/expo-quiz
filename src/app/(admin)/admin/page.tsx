@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import Image from "next/image";
+import QRCode from "react-qr-code";
 
 type Question = {
   id: string;
@@ -38,8 +40,8 @@ function Section({ children, className = "" }: { children: React.ReactNode; clas
 function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <div className="space-y-1">
-      <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
-      {subtitle && <p className="text-slate-500 text-xs">{subtitle}</p>}
+      <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-slate-900">{title}</h2>
+      {subtitle && <p className="text-slate-500 text-xs sm:text-sm">{subtitle}</p>}
     </div>
   );
 }
@@ -56,7 +58,7 @@ function StatusBadge({ status }: { status: "active" | "ended" | "none" }) {
     none: "Belum ada",
   };
   return (
-    <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-xs font-medium ${styles[status]}`}>
+    <span className={`inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium ${styles[status]}`}>
       {labels[status]}
     </span>
   );
@@ -65,12 +67,12 @@ function StatusBadge({ status }: { status: "active" | "ended" | "none" }) {
 function InfoBox({ label, value, onCopy }: { label: string; value: string; onCopy?: () => void }) {
   return (
     <div className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
-      <div className="space-y-0.5">
-        <div className="text-[10px] text-slate-500 uppercase tracking-wider">{label}</div>
-        <div className="font-mono text-xs text-slate-900 break-all">{value}</div>
+      <div className="space-y-1 flex-1 min-w-0 mr-2">
+        <div className="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wider font-medium">{label}</div>
+        <div className="font-mono text-xs sm:text-sm text-slate-900 break-all">{value}</div>
       </div>
       {onCopy && (
-        <Button size="sm" variant="ghost" onClick={onCopy} className="ml-3 shrink-0 h-7 text-xs">
+        <Button size="sm" variant="ghost" onClick={onCopy} className="shrink-0 h-8 sm:h-9 text-xs sm:text-sm font-medium">
           Salin
         </Button>
       )}
@@ -95,6 +97,8 @@ export default function AdminPage() {
   const [correctIndex, setCorrectIndex] = useState(0);
   const [points, setPoints] = useState(100);
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
+  const [qrBusy, setQrBusy] = useState(false);
+  const qrRef = useRef<HTMLDivElement | null>(null);
 
   const readJson = useCallback(async (res: Response) => {
     const text = await res.text();
@@ -427,6 +431,9 @@ export default function AdminPage() {
     setOptions((prev) => prev.map((opt, i) => (i === index ? value : opt)));
   }
 
+  const joinUrl = code && origin ? `${origin}/join/${code}` : "";
+  const screenUrl = code && origin ? `${origin}/screen/${code}` : "";
+
   function copyText(text: string) {
     if (!text) return;
     navigator.clipboard?.writeText(text);
@@ -435,8 +442,81 @@ export default function AdminPage() {
     });
   }
 
-  const joinUrl = code && origin ? `${origin}/join/${code}` : "";
-  const screenUrl = code && origin ? `${origin}/screen/${code}` : "";
+  const buildQrBlob = useCallback(async (size = 512) => {
+    const svg = qrRef.current?.querySelector("svg");
+    if (!svg) throw new Error("QR belum siap");
+
+    const serializer = new XMLSerializer();
+    const svgText = serializer.serializeToString(svg);
+    const svgBlob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(svgBlob);
+
+    return new Promise<Blob>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          URL.revokeObjectURL(url);
+          reject(new Error("Canvas tidak tersedia"));
+          return;
+        }
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(0, 0, size, size);
+        ctx.drawImage(img, 0, 0, size, size);
+        URL.revokeObjectURL(url);
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            reject(new Error("Gagal membuat QR"));
+            return;
+          }
+          resolve(blob);
+        }, "image/png");
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error("Gagal memuat QR"));
+      };
+      img.src = url;
+    });
+  }, []);
+
+  const shareQr = useCallback(async () => {
+    if (!joinUrl || !code) return;
+    setQrBusy(true);
+    try {
+      const blob = await buildQrBlob();
+      const filename = `qr-${code}.png`;
+      const file = new File([blob], filename, { type: "image/png" });
+
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: `QR Sesi ${code}`,
+          text: "Scan untuk ikut quiz",
+        });
+      } else {
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(link.href), 250);
+        toast.success("QR tersimpan", {
+          description: "File QR disimpan ke perangkat.",
+        });
+      }
+    } catch (error) {
+      toast.error("Gagal membagikan QR", {
+        description: error instanceof Error ? error.message : "Coba ulangi.",
+      });
+    } finally {
+      setQrBusy(false);
+    }
+  }, [buildQrBlob, code, joinUrl]);
 
   const sessionStatus = code ? (endedAt ? "ended" : "active") : "none";
 
@@ -459,23 +539,37 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white px-6 py-16 sm:py-20">
-      <div className="mx-auto max-w-7xl space-y-16">
-        <header className="text-center space-y-6">
-          <div className="flex items-center justify-center gap-4">
-            <h1 className="text-5xl sm:text-6xl font-bold text-slate-900">
+    <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white px-4 sm:px-6 py-12 sm:py-16 lg:py-20">
+      <div className="mx-auto max-w-7xl space-y-10 sm:space-y-16">
+        <header className="text-center space-y-4 sm:space-y-6">
+          {/* Logo */}
+          <div className="flex justify-center">
+            <div className="relative w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28">
+              <Image
+                src="/logo1.png"
+                alt="Logo"
+                fill
+                className="object-contain"
+                priority
+              />
+            </div>
+          </div>
+
+          {/* Title & Logout */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-slate-900 leading-tight">
               Admin Dashboard
             </h1>
             <Button
               variant="ghost"
               size="sm"
               onClick={handleLogout}
-              className="rounded-full"
+              className="rounded-full sm:mt-2"
             >
               Logout
             </Button>
           </div>
-          <p className="text-lg text-slate-500 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg lg:text-xl text-slate-500 max-w-2xl mx-auto px-4">
             Kelola sesi quiz dengan mudah
           </p>
         </header>
@@ -493,28 +587,28 @@ export default function AdminPage() {
               </div>
 
           <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex flex-col gap-3">
               <Button
                 onClick={createSession}
                 disabled={busy}
-                size="default"
-                className="rounded-full px-6"
+                size="lg"
+                className="rounded-full px-8 text-base font-semibold shadow-sm hover:shadow-md transition-all w-full sm:w-auto"
               >
                 Buat Sesi Baru
               </Button>
-              <div className="flex flex-1 gap-2">
+              <div className="flex gap-2">
                 <Input
                   value={manualCode}
                   onChange={(e) => setManualCode(e.target.value.toUpperCase())}
                   placeholder="Kode sesi"
-                  className="rounded-full border-slate-200"
+                  className="rounded-full border-slate-200 h-11 text-base"
                 />
                 <Button
                   variant="outline"
                   onClick={loadSession}
                   disabled={busy}
-                  size="default"
-                  className="rounded-full px-6"
+                  size="lg"
+                  className="rounded-full px-6 sm:px-8 font-semibold whitespace-nowrap"
                 >
                   Muat
                 </Button>
@@ -527,8 +621,35 @@ export default function AdminPage() {
                 <InfoBox label="Link Peserta" value={joinUrl} onCopy={() => copyText(joinUrl)} />
                 <InfoBox label="Link Layar" value={screenUrl} onCopy={() => copyText(screenUrl)} />
 
+                {joinUrl && (
+                  <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
+                    <div className="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wider font-medium">
+                      QR Peserta
+                    </div>
+                    <div ref={qrRef} className="mt-3 flex justify-center">
+                      <div className="rounded-xl border border-slate-200 bg-white p-3">
+                        <QRCode value={joinUrl} size={180} bgColor="#FFFFFF" fgColor="#111111" />
+                      </div>
+                    </div>
+                    <p className="mt-3 text-xs text-slate-500 text-center">
+                      Scan untuk masuk ke sesi quiz
+                    </p>
+                    <div className="mt-4 flex justify-center">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={shareQr}
+                        disabled={qrBusy}
+                        className="rounded-full text-xs sm:text-sm"
+                      >
+                        {qrBusy ? "Menyiapkan..." : "Share QR"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between pt-4">
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs sm:text-sm text-slate-500">
                     {endedAt ? "Sesi sudah selesai" : "Sesi sedang berjalan"}
                   </p>
                   {!endedAt && (
@@ -537,7 +658,7 @@ export default function AdminPage() {
                       variant="outline"
                       onClick={endSession}
                       disabled={busy}
-                      className="rounded-full text-xs h-8"
+                      className="rounded-full text-xs sm:text-sm h-8 sm:h-9 px-4 sm:px-5 font-medium"
                     >
                       Akhiri Sesi
                     </Button>
@@ -567,7 +688,7 @@ export default function AdminPage() {
 
           <div className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm sm:text-base font-medium text-slate-700 mb-3">
                 Pertanyaan
               </label>
               <textarea
@@ -575,15 +696,15 @@ export default function AdminPage() {
                 onChange={(e) => setQuestionText(e.target.value)}
                 placeholder="Tulis pertanyaan di sini..."
                 disabled={busy || !code || !!endedAt}
-                className="min-h-[100px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all"
+                className="min-h-[100px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm sm:text-base outline-none focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm sm:text-base font-medium text-slate-700 mb-3">
                 Opsi Jawaban
               </label>
-              <div className="grid gap-2.5 sm:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-2">
                 {options.map((opt, i) => (
                   <Input
                     key={i}
@@ -591,7 +712,7 @@ export default function AdminPage() {
                     onChange={(e) => updateOption(i, e.target.value)}
                     placeholder={`Opsi ${i + 1}`}
                     disabled={busy || !code || !!endedAt}
-                    className="rounded-xl border-slate-200"
+                    className="rounded-xl border-slate-200 h-11 text-sm sm:text-base"
                   />
                 ))}
               </div>
@@ -599,14 +720,14 @@ export default function AdminPage() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label className="block text-sm sm:text-base font-medium text-slate-700 mb-3">
                   Jawaban Benar
                 </label>
                 <select
                   value={String(correctIndex)}
                   onChange={(e) => setCorrectIndex(Number(e.target.value))}
                   disabled={busy || !code || !!endedAt}
-                  className="h-10 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all"
+                  className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm sm:text-base outline-none focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all"
                 >
                   {options.map((_, i) => (
                     <option key={i} value={i}>
@@ -617,7 +738,7 @@ export default function AdminPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label className="block text-sm sm:text-base font-medium text-slate-700 mb-3">
                   Poin
                 </label>
                 <Input
@@ -626,7 +747,7 @@ export default function AdminPage() {
                   onChange={(e) => setPoints(Number(e.target.value))}
                   min={0}
                   disabled={busy || !code || !!endedAt}
-                  className="rounded-xl border-slate-200 h-10"
+                  className="rounded-xl border-slate-200 h-11 text-sm sm:text-base"
                 />
               </div>
             </div>
@@ -634,8 +755,8 @@ export default function AdminPage() {
             <Button
               onClick={addQuestion}
               disabled={busy || !code || !!endedAt}
-              size="default"
-              className="w-full rounded-full"
+              size="lg"
+              className="w-full rounded-full text-base font-semibold shadow-sm hover:shadow-md transition-all"
             >
               Tambah Pertanyaan
             </Button>
@@ -653,7 +774,7 @@ export default function AdminPage() {
                   size="sm"
                   onClick={loadSessions}
                   disabled={busy}
-                  className="rounded-full h-8 text-xs"
+                  className="rounded-full h-8 sm:h-9 text-xs sm:text-sm px-3 sm:px-4 font-medium"
                 >
                   Refresh
                 </Button>
@@ -678,13 +799,13 @@ export default function AdminPage() {
                     }}
                   >
                     <div className="space-y-1.5">
-                      <div className="font-semibold text-slate-900 text-sm">{s.title}</div>
-                      <div className="flex items-center gap-2 text-xs text-slate-500">
-                        <span className="font-mono bg-white px-2 py-1 rounded border border-slate-200">{s.code}</span>
+                      <div className="font-semibold text-slate-900 text-sm sm:text-base">{s.title}</div>
+                      <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-500">
+                        <span className="font-mono bg-white px-2 py-1 rounded border border-slate-200 text-xs sm:text-sm">{s.code}</span>
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className={`text-[10px] uppercase tracking-wider font-medium ${
+                      <span className={`text-[10px] sm:text-xs uppercase tracking-wider font-medium ${
                         s.ended_at ? "text-slate-400" : "text-green-600"
                       }`}>
                         {s.ended_at ? "Selesai" : "Aktif"}
@@ -699,7 +820,7 @@ export default function AdminPage() {
                           setSessionId(s.id);
                           setEndedAt(s.ended_at ?? null);
                         }}
-                        className="rounded-full h-7 text-xs"
+                        className="rounded-full h-7 sm:h-8 text-xs sm:text-sm font-medium"
                       >
                         Pilih
                       </Button>
@@ -717,7 +838,7 @@ export default function AdminPage() {
             <Section>
               <div className="flex items-center justify-between mb-6">
                 <SectionHeader title="Bank Pertanyaan" subtitle="Daftar pertanyaan yang sudah dibuat" />
-                <div className="bg-slate-100 px-3 py-1 rounded-full text-xs font-medium text-slate-600">
+                <div className="bg-slate-100 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium text-slate-600">
                   {questions.length} pertanyaan
                 </div>
               </div>
@@ -732,27 +853,27 @@ export default function AdminPage() {
                 {questions.map((q) => (
                   <div
                     key={q.id}
-                    className="rounded-2xl border border-slate-100 bg-white p-6 hover:border-slate-300 hover:shadow-md transition-all"
+                    className="rounded-2xl border border-slate-100 bg-white p-5 sm:p-6 hover:border-slate-300 hover:shadow-md transition-all"
                   >
                     <div className="flex items-center justify-between mb-4">
-                      <span className="text-xs font-medium text-slate-400 bg-slate-50 px-3 py-1 rounded-full">Q{q.order_no}</span>
-                      <span className="text-xs font-semibold text-slate-600 bg-amber-50 px-3 py-1 rounded-full">{q.points} poin</span>
+                      <span className="text-xs sm:text-sm font-medium text-slate-400 bg-slate-50 px-3 py-1 rounded-full">Q{q.order_no}</span>
+                      <span className="text-xs sm:text-sm font-semibold text-slate-600 bg-amber-50 px-3 py-1 rounded-full">{q.points} poin</span>
                     </div>
-                    <h3 className="text-base font-semibold text-slate-900 mb-5 leading-relaxed">{q.question}</h3>
+                    <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-slate-900 mb-4 sm:mb-5 leading-relaxed">{q.question}</h3>
                     <div className="grid gap-3 sm:grid-cols-2">
                       {q.options.map((opt, i) => (
                         <div
                           key={`${q.id}-${i}`}
-                          className={`rounded-xl px-4 py-3 text-sm border transition-all ${
+                          className={`rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm border transition-all ${
                             i === q.correct_index
                               ? "bg-slate-900 text-white border-slate-900 shadow-lg"
                               : "bg-slate-50 text-slate-700 border-slate-100 hover:border-slate-200"
                           }`}
                         >
-                          <div className="text-[10px] uppercase tracking-wider opacity-60 mb-1">
+                          <div className="text-[10px] sm:text-xs uppercase tracking-wider opacity-60 mb-1">
                             Opsi {i + 1}
                           </div>
-                          <div className="font-medium">{opt}</div>
+                          <div className="font-medium text-xs sm:text-sm">{opt}</div>
                         </div>
                       ))}
                     </div>
