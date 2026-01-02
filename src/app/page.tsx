@@ -51,15 +51,19 @@ export default function HomePage() {
             <h2 className="text-2xl font-semibold text-slate-900">Gabung Sesi</h2>
           </div>
 
-          <form onSubmit={handleJoin} className="space-y-4">
+          <form onSubmit={handleJoin} className="flex flex-col items-center space-y-6">
             <Input
               value={code}
               onChange={(e) => setCode(e.target.value)}
               placeholder="Masukkan kode sesi"
-              className="text-center text-lg h-14 rounded-full border-slate-200 bg-white"
+              className="text-center text-lg h-14 rounded-full border-slate-200 bg-white shadow-sm"
               autoComplete="off"
             />
-            <Button type="submit" size="lg" className="w-full rounded-full h-14 text-base">
+            <Button 
+              type="submit" 
+              size="lg" 
+              className="px-10 rounded-full font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+            >
               Masuk
             </Button>
           </form>
