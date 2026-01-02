@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import { toast } from "sonner";
 
 export default function JoinPage() {
   const params = useParams();
@@ -19,6 +18,8 @@ export default function JoinPage() {
   async function join() {
     setErr(null);
     setLoading(true);
+    toast.loading("Bergabung ke sesi...", { id: "join-session" });
+
     const res = await fetch("/api/participant/join", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -26,54 +27,71 @@ export default function JoinPage() {
     });
     const json = await res.json();
     if (!res.ok) {
+      toast.error("Gagal bergabung", {
+        id: "join-session",
+        description: json.error || "Gagal masuk",
+      });
+      setErr(json.error || "Gagal masuk");
       setLoading(false);
-      return setErr(json.error || "Gagal masuk");
+      return;
     }
 
     localStorage.setItem(`participant:${code}`, json.participant.id);
     localStorage.setItem(`sessionId:${code}`, json.session.id);
+    toast.success("Berhasil bergabung!", {
+      id: "join-session",
+      description: `Selamat datang, ${name}!`,
+    });
     router.push(`/quiz/${code}`);
     setLoading(false);
   }
 
   return (
-    <main className="min-h-screen px-6 py-12 flex items-center justify-center">
-      <Card className="w-full max-w-lg sticker border border-white/60 bg-white/90">
-        <CardContent className="p-6 sm:p-8 space-y-6">
-          <div className="text-center space-y-3">
-            <Badge className="bg-[#F3F7FF] text-[#4451A3]">Peserta</Badge>
-            <h1 className="text-3xl sm:text-4xl font-semibold text-slate-900">Siap ikut quiz?</h1>
-            <div className="text-sm text-muted-foreground">Sesi: {code}</div>
-          </div>
+    <main className="min-h-screen flex items-center justify-center px-6 py-20">
+      <div className="w-full max-w-md space-y-12">
+        <div className="text-center space-y-6">
+          <h1 className="text-5xl sm:text-6xl font-bold text-slate-900">
+            Siap Quiz?
+          </h1>
+          <p className="text-lg text-slate-500">
+            Sesi: <span className="font-mono font-semibold text-slate-900">{code}</span>
+          </p>
+        </div>
 
-          <div className="space-y-2">
+        <div className="space-y-6">
+          <div className="space-y-3">
             <Input
-              placeholder="Nama singkat"
+              placeholder="Masukkan nama"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="bg-white"
+              className="text-center text-lg h-14 rounded-full border-slate-200"
             />
             {err && (
-              <div className="rounded-2xl bg-[#FFF4F4] px-4 py-2 text-sm text-slate-600">
+              <div className="bg-slate-100 rounded-2xl px-6 py-4 text-sm text-slate-600 text-center">
                 {err}
               </div>
             )}
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border border-[#CFEBDD] bg-[#E9F7F0] px-4 py-3 text-xs font-semibold text-[#2D7A56]">
-              Dapatkan poin tertinggi
-            </div>
-            <div className="rounded-2xl border border-[#F7C9D1] bg-[#FFE9EC] px-4 py-3 text-xs font-semibold text-[#8B2C3B]">
-              Jawab secepat mungkin
-            </div>
-          </div>
-
-          <Button className="w-full" onClick={join} disabled={name.trim().length < 2 || loading}>
-            {loading ? "Memproses..." : "Mulai"}
+          <Button
+            className="w-full rounded-full h-14 text-base"
+            onClick={join}
+            disabled={name.trim().length < 2 || loading}
+            size="lg"
+          >
+            {loading ? "Memproses..." : "Mulai Quiz"}
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 pt-4">
+          <div className="text-center py-6 px-4 rounded-2xl border border-slate-100 bg-white">
+            <p className="text-sm text-slate-600">Raih poin tertinggi</p>
+          </div>
+          <div className="text-center py-6 px-4 rounded-2xl border border-slate-100 bg-white">
+            <p className="text-sm text-slate-600">Jawab secepat mungkin</p>
+          </div>
+        </div>
+      </div>
     </main>
   );
 }

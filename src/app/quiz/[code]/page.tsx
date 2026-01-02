@@ -3,9 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { toast } from "sonner";
 
 type Question = {
   id: string;
@@ -29,21 +28,21 @@ function OptionCard({ label, index, picked, disabled, onPick }: OptionCardProps)
     <button
       onClick={onPick}
       disabled={disabled}
-      className={`group w-full text-left rounded-2xl border px-6 py-5 transition-all duration-200 ${
+      className={`w-full text-left rounded-2xl border px-6 py-5 transition-all ${
         picked
-          ? "border-[#B6C8FF] bg-[#F4F7FF] shadow-[0_12px_30px_-20px_rgba(77,115,255,0.6)]"
+          ? "border-slate-900 bg-slate-900 text-white shadow-lg"
           : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"
       } ${disabled ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`}
     >
       <div className="flex items-start gap-4">
         <div
-          className={`flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold transition-colors ${
-            picked ? "bg-[#6B9EFF] text-white" : "bg-[#F1F4FF] text-[#4C5AA5]"
+          className={`flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
+            picked ? "bg-white text-slate-900" : "bg-slate-100 text-slate-700"
           }`}
         >
           {letter}
         </div>
-        <span className={`flex-1 text-base sm:text-lg ${picked ? "text-slate-900" : "text-slate-700"}`}>
+        <span className={`flex-1 text-base sm:text-lg font-medium`}>
           {label}
         </span>
       </div>
@@ -51,33 +50,29 @@ function OptionCard({ label, index, picked, disabled, onPick }: OptionCardProps)
   );
 }
 
-type SidebarItemProps = {
-  label: string;
+type ProgressItemProps = {
   index: number;
   active: boolean;
   done: boolean;
 };
 
-function SidebarItem({ label, index, active, done }: SidebarItemProps) {
+function ProgressItem({ index, active, done }: ProgressItemProps) {
   return (
     <div
-      className={`rounded-2xl border px-4 py-4 transition-colors ${
-        active ? "border-[#B6C8FF] bg-[#F4F7FF]" : "border-slate-200 bg-white"
+      className={`rounded-xl border px-4 py-3 transition-colors ${
+        active ? "border-slate-900 bg-slate-900" : done ? "border-slate-200 bg-slate-100" : "border-slate-200 bg-white"
       }`}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-center gap-3">
         <div
-          className={`flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
-            done ? "bg-[#E6F6EE] text-[#2D7A56]" : active ? "bg-[#6B9EFF] text-white" : "bg-[#F2F4F8] text-slate-600"
+          className={`flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
+            active ? "bg-white text-slate-900" : done ? "bg-slate-200 text-slate-700" : "bg-slate-100 text-slate-500"
           }`}
         >
           {index + 1}
         </div>
-        <div className="space-y-1">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            Pertanyaan {index + 1}
-          </div>
-          <div className="text-sm text-slate-700 leading-snug">{label}</div>
+        <div className={`text-xs font-medium ${active ? "text-white" : done ? "text-slate-600" : "text-slate-400"}`}>
+          Soal {index + 1}
         </div>
       </div>
     </div>
@@ -149,6 +144,7 @@ export default function QuizPage() {
     if (!canAnswer || picked === null) return;
     setSubmitting(true);
     setStatus("Lagi ngirim jawaban...");
+    toast.loading("Mengirim jawaban...", { id: "submit-answer" });
 
     const res = await fetch("/api/answer/submit", {
       method: "POST",
@@ -163,6 +159,10 @@ export default function QuizPage() {
 
     const json = await res.json();
     if (!res.ok) {
+      toast.error("Gagal mengirim", {
+        id: "submit-answer",
+        description: json.error || "Gagal, coba lagi ya.",
+      });
       setStatus(json.error || "Gagal, coba lagi ya.");
       setSubmitting(false);
       return;
@@ -171,6 +171,10 @@ export default function QuizPage() {
     setPicked(null);
     setStatus(null);
     setSubmitting(false);
+    toast.success("Jawaban terkirim!", {
+      id: "submit-answer",
+      description: idx + 1 < total ? "Lanjut ke soal berikutnya" : "Semua soal sudah selesai!",
+    });
 
     if (idx + 1 < total) setIdx(idx + 1);
     else router.push(`/quiz/${code}/done`);
@@ -178,52 +182,54 @@ export default function QuizPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen px-6 py-16 flex justify-center items-center">
-        <Card className="w-full max-w-lg sticker border border-white/60 bg-white/90">
-          <CardContent className="p-10 text-center space-y-3">
-            <div className="text-xs uppercase tracking-[0.35em] text-muted-foreground">Bentar ya</div>
-            <h1 className="text-3xl sm:text-4xl font-semibold text-slate-900">Quiz lagi disiapin</h1>
-            <p className="text-base text-muted-foreground">
-              Siapin jempol, tinggal sebentar lagi.
+      <div className="min-h-screen px-6 py-20 flex justify-center items-center">
+        <div className="w-full max-w-md text-center space-y-8">
+          <div className="space-y-4">
+            <h1 className="text-4xl sm:text-5xl font-bold text-slate-900">Loading...</h1>
+            <p className="text-lg text-slate-500">
+              Quiz sedang disiapkan
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen px-6 py-16 flex justify-center items-center">
-        <Card className="w-full max-w-xl sticker border border-white/60 bg-white/90">
-          <CardContent className="p-10 space-y-6 text-center">
-            <div className="text-xs uppercase tracking-[0.35em] text-muted-foreground">Oops</div>
-            <h1 className="text-3xl sm:text-4xl font-semibold text-slate-900">Sesi belum ketemu</h1>
-            <p className="text-base text-muted-foreground leading-relaxed">{error}</p>
-            <Button size="lg" onClick={() => router.push("/join")}>
-              Balik ke Halaman Join
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen px-6 py-20 flex justify-center items-center">
+        <div className="w-full max-w-md text-center space-y-8">
+          <div className="space-y-4">
+            <h1 className="text-4xl sm:text-5xl font-bold text-slate-900">Error</h1>
+            <p className="text-lg text-slate-500">{error}</p>
+          </div>
+          <Button size="lg" onClick={() => router.push("/join")} className="rounded-full">
+            Kembali ke Join
+          </Button>
+        </div>
       </div>
     );
   }
 
   if (!q) {
     return (
-      <div className="min-h-screen px-6 py-16 flex justify-center items-center">
-        <Card className="w-full max-w-xl sticker border border-white/60 bg-white/90">
-          <CardContent className="p-10 space-y-6 text-center">
-            <div className="text-xs uppercase tracking-[0.35em] text-muted-foreground">Santai dulu</div>
-            <h1 className="text-3xl sm:text-4xl font-semibold text-slate-900">Quiz belum dimulai</h1>
-            <p className="text-base text-muted-foreground leading-relaxed">
-              Tunggu host-nya mulaiin. Kamu bisa liat leaderboard dulu.
+      <div className="min-h-screen px-6 py-20 flex justify-center items-center">
+        <div className="w-full max-w-md text-center space-y-8">
+          <div className="space-y-4">
+            <h1 className="text-4xl sm:text-5xl font-bold text-slate-900">Tunggu Sebentar</h1>
+            <p className="text-lg text-slate-500">
+              Quiz belum dimulai. Cek leaderboard dulu
             </p>
-            <Button size="lg" variant="outline" onClick={() => router.push(`/screen/${code}`)}>
-              Lihat Leaderboard Dulu
-            </Button>
-          </CardContent>
-        </Card>
+          </div>
+          <Button
+            size="lg"
+            variant="outline"
+            onClick={() => router.push(`/screen/${code}`)}
+            className="rounded-full"
+          >
+            Lihat Leaderboard
+          </Button>
+        </div>
       </div>
     );
   }
@@ -232,145 +238,101 @@ export default function QuizPage() {
   const answerOptions = [...q.options, "Semua jawaban di atas benar"];
 
   return (
-    <div className="min-h-screen px-4 py-10 sm:px-6 lg:px-10">
-      <div className="mx-auto grid w-full max-w-6xl gap-8 lg:grid-cols-[320px_1fr]">
-        <aside className="order-2 lg:order-1">
-          <Card className="sticker border border-white/60 bg-white/90">
-            <CardContent className="p-6 space-y-6">
-              <div className="space-y-3">
-                <Badge className="bg-[#F1F4FF] text-[#4451A3]">Sesi santai</Badge>
-                <div className="space-y-2">
-                  <h2 className="text-lg font-semibold text-slate-900">Quiz Materi Hari Ini</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Kode sesi {code} - {total} pertanyaan.
-                  </p>
-                </div>
-              </div>
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white px-4 py-12 sm:px-6">
+      <div className="mx-auto max-w-3xl space-y-12">
+        {/* Header */}
+        <div className="text-center space-y-4">
+          <div className="flex items-center justify-center gap-2">
+            <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">Quiz</h1>
+            <span className="font-mono text-lg text-slate-500">{code}</span>
+          </div>
+          <div className="flex items-center justify-center gap-4 max-w-md mx-auto">
+            <div className="flex-1 h-2 rounded-full bg-slate-200 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-slate-900 transition-all duration-500"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <span className="text-sm font-semibold text-slate-700 min-w-[3.5rem] text-right">
+              {idx + 1}/{total}
+            </span>
+          </div>
+        </div>
 
-              <div className="space-y-3">
-                {questions.map((question, index) => (
-                  <SidebarItem
-                    key={question.id}
-                    label={question.question}
-                    index={index}
-                    active={index === idx}
-                    done={index < idx}
-                  />
-                ))}
-              </div>
+        {/* Progress Pills */}
+        <div className="flex flex-wrap gap-2 justify-center">
+          {questions.slice(0, 10).map((_, index) => (
+            <ProgressItem
+              key={index}
+              index={index}
+              active={index === idx}
+              done={index < idx}
+            />
+          ))}
+        </div>
 
-              <div className="rounded-2xl border border-dashed border-slate-200 bg-white/70 px-4 py-4 text-sm text-slate-600">
-                <div className="font-semibold text-slate-800 mb-1">Tips santai</div>
-                Baca pelan, pilih yang paling masuk akal. Gak perlu buru-buru.
-              </div>
-            </CardContent>
-          </Card>
-        </aside>
+        {/* Question Card */}
+        <div className="bg-white rounded-3xl border border-slate-100 p-8 sm:p-12 space-y-10">
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <p className="text-xs uppercase tracking-wider text-slate-500 font-medium">
+                Pertanyaan {idx + 1}
+              </p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 leading-relaxed">
+                {q.question}
+              </h2>
+            </div>
 
-        <main className="order-1 lg:order-2">
-          <Card className="sticker border border-white/60 bg-white/90">
-            <CardContent className="p-6 sm:p-8 lg:p-12">
-              <div className="mb-10 space-y-6">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge className="bg-[#F3F7FF] text-[#4451A3]">Quiz santai</Badge>
-                    <Badge variant="outline" className="border-[#D4DDF5] text-slate-600">
-                      Sesi {code}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button className="size-10 rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50">
-                      <svg className="mx-auto size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    </button>
-                    <button className="size-10 rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50">
-                      <svg className="mx-auto size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
+            <div className="space-y-3">
+              {answerOptions.map((opt, i) => (
+                <OptionCard
+                  key={`${q.id}-${i}`}
+                  label={opt}
+                  index={i}
+                  picked={picked === i}
+                  disabled={submitting}
+                  onPick={() => setPicked(i)}
+                />
+              ))}
+            </div>
+          </div>
 
-                <div className="space-y-3">
-                  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold text-slate-900">
-                    Sesi Quiz {code}
-                  </h1>
-                  <p className="text-base sm:text-lg text-muted-foreground max-w-2xl">
-                    Santai aja. Pilih jawaban yang paling masuk akal, nanti lanjut ke soal berikutnya.
-                  </p>
-                </div>
+          {status && (
+            <div className="text-center text-sm text-slate-600 bg-slate-100 rounded-2xl px-6 py-4">
+              {status}
+            </div>
+          )}
 
-                <div className="flex items-center gap-4">
-                  <div className="flex-1 h-2 rounded-full bg-[#EEF1F8] overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-[#6B9EFF] to-[#9FB6FF] transition-all duration-500 ease-out"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                  <span className="text-sm font-semibold text-slate-700 min-w-[3.5rem] text-right">
-                    {idx + 1}/{total}
-                  </span>
-                </div>
-              </div>
+          {!participantId && (
+            <div className="text-center text-sm text-slate-600 bg-slate-100 rounded-2xl px-6 py-4">
+              Kamu belum terdaftar. Silakan join ulang.
+            </div>
+          )}
 
-              <div className="mb-10 space-y-6">
-                <div className="space-y-2">
-                  <div className="text-xs uppercase tracking-[0.35em] text-muted-foreground">Pertanyaan</div>
-                  <h2 className="text-xl sm:text-2xl font-semibold text-slate-900 leading-relaxed">
-                    {q.question}
-                  </h2>
-                  <p className="text-sm text-muted-foreground">Pilih satu jawaban yang paling cocok.</p>
-                </div>
+          <div className="flex flex-col sm:flex-row gap-3 pt-6">
+            <Button
+              variant="ghost"
+              onClick={() => idx > 0 && setIdx(idx - 1)}
+              disabled={idx === 0 || submitting}
+              className="rounded-full"
+            >
+              Kembali
+            </Button>
+            <Button
+              size="lg"
+              className="flex-1 rounded-full h-14 text-base"
+              onClick={submit}
+              disabled={picked === null || !participantId || submitting}
+            >
+              {submitting ? "Mengirim..." : "Kirim Jawaban"}
+            </Button>
+          </div>
+        </div>
 
-                <div className="space-y-4">
-                  {answerOptions.map((opt, i) => (
-                    <OptionCard
-                      key={`${q.id}-${i}`}
-                      label={opt}
-                      index={i}
-                      picked={picked === i}
-                      disabled={submitting}
-                      onPick={() => setPicked(i)}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {status && (
-                <div className="mb-6 text-center text-sm text-slate-600 bg-[#F6F8FF] rounded-2xl px-4 py-3">
-                  {status}
-                </div>
-              )}
-
-              {!participantId && (
-                <div className="mb-6 text-center text-sm text-slate-600 bg-[#FFF4F4] rounded-2xl px-4 py-3">
-                  Kamu belum terdaftar di sesi ini. Yuk, balik dan join ulang dulu.
-                </div>
-              )}
-
-              <div className="flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-slate-200">
-                <Button
-                  variant="ghost"
-                  className="text-slate-600 hover:text-slate-900 font-medium"
-                  onClick={() => idx > 0 && setIdx(idx - 1)}
-                  disabled={idx === 0 || submitting}
-                >
-                  Balik dulu
-                </Button>
-                <Button
-                  size="lg"
-                  className="bg-[#6B9EFF] hover:bg-[#5B8EEF] text-white px-8 py-6 rounded-xl font-semibold text-base shadow-sm"
-                  onClick={submit}
-                  disabled={picked === null || !participantId || submitting}
-                >
-                  {submitting ? "Mengirim..." : "Kirim Jawaban"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </main>
+        {/* Tips */}
+        <div className="bg-slate-50 rounded-2xl px-6 py-4 border border-slate-100 text-center text-sm text-slate-600">
+          Pilih jawaban yang paling tepat
+        </div>
       </div>
     </div>
   );

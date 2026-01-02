@@ -3,9 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { toast } from "sonner";
 
 type Row = {
   participant_id: string;
@@ -21,21 +20,26 @@ type LeaderboardRowProps = {
 };
 
 function LeaderboardRow({ row, index }: LeaderboardRowProps) {
-  const rankTones = [
-    "bg-[#FFF6DB] text-[#6C4B00] border-[#F4E2B4]",
-    "bg-[#EAF1FF] text-[#2D4C9B] border-[#D4DDF5]",
-    "bg-[#FFE9EC] text-[#8B2C3B] border-[#F7C9D1]",
-  ];
-  const tone = index < 3 ? rankTones[index] : "bg-white text-slate-700 border-slate-200";
+  const isTop3 = index < 3;
 
   return (
     <div
-      className={`grid grid-cols-12 gap-2 rounded-2xl border px-3 py-3 ${tone} ${index < 3 ? "font-semibold" : ""}`}
+      className={`grid grid-cols-12 gap-4 rounded-2xl px-6 py-5 transition-colors ${
+        isTop3
+          ? "bg-slate-900 text-white border border-slate-900"
+          : "bg-white text-slate-700 border border-slate-100 hover:border-slate-200"
+      }`}
     >
-      <div className="col-span-1">{index + 1}</div>
-      <div className="col-span-7">{row.display_name}</div>
-      <div className="col-span-2 text-right">{row.total_points}</div>
-      <div className="col-span-2 text-right">{row.correct_count}</div>
+      <div className={`col-span-1 font-semibold ${isTop3 ? "text-white" : "text-slate-900"}`}>
+        {index + 1}
+      </div>
+      <div className={`col-span-7 ${isTop3 ? "font-semibold" : "font-medium"}`}>
+        {row.display_name}
+      </div>
+      <div className="col-span-2 text-right font-semibold">{row.total_points}</div>
+      <div className={`col-span-2 text-right ${isTop3 ? "text-white/80" : "text-slate-500"}`}>
+        {row.correct_count}
+      </div>
     </div>
   );
 }
@@ -50,7 +54,11 @@ export default function ScreenPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  async function fetchBoard(sid: string) {
+  async function fetchBoard(sid: string, showToast = false) {
+    if (showToast) {
+      toast.loading("Memuat leaderboard...", { id: "fetch-leaderboard" });
+    }
+
     const { data, error: boardErr } = await supabase
       .from("v_leaderboard")
       .select("*")
@@ -60,11 +68,23 @@ export default function ScreenPage() {
 
     if (boardErr) {
       setError("Leaderboard belum bisa dimuat.");
+      if (showToast) {
+        toast.error("Gagal memuat", {
+          id: "fetch-leaderboard",
+          description: "Leaderboard belum bisa dimuat.",
+        });
+      }
       return;
     }
 
     setError(null);
     setRows((data as any) ?? []);
+    if (showToast) {
+      toast.success("Leaderboard dimuat!", {
+        id: "fetch-leaderboard",
+        description: `${(data ?? []).length} peserta`,
+      });
+    }
   }
 
   useEffect(() => {
@@ -108,63 +128,69 @@ export default function ScreenPage() {
     };
   }, [code]);
 
-  const badgeTone = endedAt
-    ? "bg-[#FFF6DB] text-[#6C4B00]"
-    : "bg-[#E9F7F0] text-[#2D7A56]";
-
   return (
-    <main className="min-h-screen px-6 py-12">
-      <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="space-y-2">
-            <Badge className={badgeTone}>{endedAt ? "Selesai" : "Live"}</Badge>
-            <h1 className="text-3xl sm:text-4xl font-semibold text-slate-900">
-              Leaderboard {code}
-            </h1>
-            <p className="text-sm text-muted-foreground">Update live dari jawaban peserta.</p>
+    <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white px-6 py-16 sm:py-20">
+      <div className="max-w-4xl mx-auto space-y-12">
+        <div className="flex flex-wrap items-center justify-between gap-6">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <h1 className="text-4xl sm:text-5xl font-bold text-slate-900">
+                Leaderboard
+              </h1>
+              <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-xs font-medium ${
+                endedAt ? "bg-slate-200 text-slate-600" : "bg-slate-900 text-white"
+              }`}>
+                {endedAt ? "Selesai" : "Live"}
+              </span>
+            </div>
+            <p className="text-lg text-slate-500">
+              Sesi: <span className="font-mono font-semibold text-slate-900">{code}</span>
+            </p>
           </div>
           {sessionId && (
-            <Button variant="outline" onClick={() => fetchBoard(sessionId)}>
-              Muat ulang
+            <Button
+              variant="outline"
+              onClick={() => fetchBoard(sessionId, true)}
+              className="rounded-full"
+            >
+              Refresh
             </Button>
           )}
         </div>
 
-        <Card className="sticker border border-white/60 bg-white/90">
-          <CardContent className="p-6">
-            <div className="grid grid-cols-12 gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground border-b border-slate-200 pb-3">
-              <div className="col-span-1">#</div>
-              <div className="col-span-7">Nama</div>
-              <div className="col-span-2 text-right">Poin</div>
-              <div className="col-span-2 text-right">Benar</div>
-            </div>
+        <div className="bg-white rounded-3xl border border-slate-100 p-8 sm:p-10">
+          <div className="grid grid-cols-12 gap-4 text-xs font-medium uppercase tracking-wider text-slate-500 border-b border-slate-200 pb-4 mb-6">
+            <div className="col-span-1">#</div>
+            <div className="col-span-7">Nama</div>
+            <div className="col-span-2 text-right">Poin</div>
+            <div className="col-span-2 text-right">Benar</div>
+          </div>
 
-            <div className="space-y-3 pt-4">
-              {loading && (
-                <div className="rounded-2xl border border-slate-200 bg-[#F6F8FF] px-4 py-4 text-sm text-slate-600">
-                  Memuat leaderboard...
-                </div>
-              )}
-              {error && !loading && (
-                <div className="rounded-2xl border border-slate-200 bg-[#FFF4F4] px-4 py-4 text-sm text-slate-600">
-                  {error}
-                </div>
-              )}
-              {!loading && !error &&
-                rows.map((row, index) => (
-                  <LeaderboardRow key={row.participant_id} row={row} index={index} />
-                ))}
-              {!loading && !error && rows.length === 0 && (
-                <div className="rounded-2xl border border-slate-200 bg-[#F6F8FF] px-4 py-4 text-sm text-slate-600">
-                  Belum ada jawaban masuk.
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+          <div className="space-y-3">
+            {loading && (
+              <div className="bg-slate-50 rounded-2xl px-6 py-8 text-center text-sm text-slate-600">
+                Memuat leaderboard...
+              </div>
+            )}
+            {error && !loading && (
+              <div className="bg-slate-100 rounded-2xl px-6 py-8 text-center text-sm text-slate-600">
+                {error}
+              </div>
+            )}
+            {!loading && !error &&
+              rows.map((row, index) => (
+                <LeaderboardRow key={row.participant_id} row={row} index={index} />
+              ))}
+            {!loading && !error && rows.length === 0 && (
+              <div className="bg-slate-50 rounded-2xl px-6 py-12 text-center text-sm text-slate-500 border border-dashed border-slate-200">
+                Belum ada jawaban masuk
+              </div>
+            )}
+          </div>
+        </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 text-xs text-muted-foreground">
-          Tips: buka halaman ini di TV atau monitor untuk update live.
+        <div className="bg-slate-50 rounded-2xl px-6 py-4 border border-slate-100 text-center text-sm text-slate-600">
+          Tampilkan halaman ini di layar besar untuk update real-time
         </div>
       </div>
     </main>
