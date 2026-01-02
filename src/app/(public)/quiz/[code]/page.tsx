@@ -36,7 +36,7 @@ function OptionCard({ label, index, picked, disabled, onPick }: OptionCardProps)
           : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"
       } ${disabled ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`}
     >
-      <div className="flex items-start gap-4">
+      <div className="flex items-center gap-4">
         <div
           className={`flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
             picked ? "bg-white text-slate-900" : "bg-slate-100 text-slate-700"
@@ -44,7 +44,7 @@ function OptionCard({ label, index, picked, disabled, onPick }: OptionCardProps)
         >
           {letter}
         </div>
-        <span className={`flex-1 text-base sm:text-lg font-medium`}>
+        <span className={`flex-1 text-base sm:text-lg font-medium leading-relaxed`}>
           {label}
         </span>
       </div>

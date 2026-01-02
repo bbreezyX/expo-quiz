@@ -36,11 +36,11 @@ export default function QuizDonePage() {
           </p>
         </div>
 
-        <div className="flex flex-col gap-4">
-          <Button asChild size="lg" className="rounded-full h-14 text-base">
+        <div className="flex flex-col gap-3">
+          <Button asChild size="lg" className="rounded-full h-14 text-base shadow-lg shadow-slate-900/10 font-semibold">
             <Link href={leaderboardHref}>Lihat Leaderboard</Link>
           </Button>
-          <Button variant="ghost" asChild className="rounded-full">
+          <Button variant="outline" asChild className="rounded-full h-12 text-base border-slate-200 hover:bg-slate-50">
             <Link href="/">Kembali ke Home</Link>
           </Button>
         </div>
