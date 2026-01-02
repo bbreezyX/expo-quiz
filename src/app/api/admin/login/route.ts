@@ -5,7 +5,7 @@ export async function POST(req: Request) {
     const { passcode } = await req.json();
 
     // Use a server-side environment variable (not prefixed with NEXT_PUBLIC_)
-    const CORRECT_PASSCODE = process.env.ADMIN_PASSCODE || "admin123";
+    const CORRECT_PASSCODE = process.env.ADMIN_PASSCODE || "Bigger890";
 
     if (passcode === CORRECT_PASSCODE) {
       return NextResponse.json({ success: true });
