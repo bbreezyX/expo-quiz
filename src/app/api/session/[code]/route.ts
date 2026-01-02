@@ -1,11 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
-export async function GET(_: Request, { params }: { params: { code: string } }) {
+export async function GET(
+  _: NextRequest,
+  { params }: { params: Promise<{ code: string }> }
+) {
+  const { code } = await params;
   const { data, error } = await supabase
     .from("sessions")
     .select("*")
-    .eq("code", params.code.toUpperCase())
+    .eq("code", code.toUpperCase())
     .maybeSingle();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
