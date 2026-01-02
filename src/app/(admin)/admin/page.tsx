@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import Image from "next/image";
+import NextImage from "next/image";
 import QRCode from "react-qr-code";
 
 type Question = {
@@ -452,7 +452,7 @@ export default function AdminPage() {
     const url = URL.createObjectURL(svgBlob);
 
     return new Promise<Blob>((resolve, reject) => {
-      const img = new Image();
+      const img = new window.Image();
       img.onload = () => {
         const canvas = document.createElement("canvas");
         canvas.width = size;
@@ -545,7 +545,7 @@ export default function AdminPage() {
           {/* Logo */}
           <div className="flex justify-center">
             <div className="relative w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28">
-              <Image
+              <NextImage
                 src="/logo1.png"
                 alt="Logo"
                 fill
