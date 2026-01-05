@@ -341,6 +341,7 @@ export default function AdminPage() {
                     setCode(null);
                     setSessionId(null);
                     setEndedAt(null);
+                    setQuestions([]);
                   }}
                 />
 
