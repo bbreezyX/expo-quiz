@@ -11,7 +11,7 @@ import QRCode from "react-qr-code";
 
 type Question = {
   id: string;
-  order_no: number;
+  order_no?: number; // Optional in Bank
   question: string;
   options: string[];
   correct_index: number;
@@ -82,23 +82,31 @@ function InfoBox({ label, value, onCopy }: { label: string; value: string; onCop
 
 export default function AdminPage() {
   const router = useRouter();
-  // Auth is now handled by middleware - if user reaches this page, they are authenticated
+  const [activeTab, setActiveTab] = useState<"session" | "bank">("session");
+
+  // Session State
   const [code, setCode] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [endedAt, setEndedAt] = useState<string | null>(null);
   const [origin, setOrigin] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-
   const [manualCode, setManualCode] = useState("");
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [sessions, setSessions] = useState<SessionSummary[]>([]);
+  const [qrBusy, setQrBusy] = useState(false);
+  const qrRef = useRef<HTMLDivElement | null>(null);
+
+  // Question Form State (Used for both Session & Bank)
   const [questionText, setQuestionText] = useState("");
   const [options, setOptions] = useState<string[]>(emptyOptions);
   const [correctIndex, setCorrectIndex] = useState(0);
   const [points, setPoints] = useState(100);
-  const [sessions, setSessions] = useState<SessionSummary[]>([]);
-  const [qrBusy, setQrBusy] = useState(false);
-  const qrRef = useRef<HTMLDivElement | null>(null);
+
+  // Bank State
+  const [bankQuestions, setBankQuestions] = useState<Question[]>([]);
+  const [selectedBankIds, setSelectedBankIds] = useState<Set<string>>(new Set());
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const readJson = useCallback(async (res: Response) => {
     const text = await res.text();
@@ -110,6 +118,8 @@ export default function AdminPage() {
     }
   }, []);
 
+  // --- Session Logic ---
+
   const loadSessions = useCallback(async () => {
     const res = await fetch("/api/session/list");
     const json = await readJson(res);
@@ -120,32 +130,12 @@ export default function AdminPage() {
     setSessions(Array.isArray(json?.sessions) ? json.sessions : []);
   }, [readJson]);
 
-  // Set origin on mount (client-side only)
-  useEffect(() => {
-    setOrigin(window.location.origin);
-  }, []);
-
   // Load sessions on mount
   useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      const res = await fetch("/api/session/list");
-      const json = await readJson(res);
-
-      if (cancelled) return;
-
-      if (!res.ok) {
-        setStatus(json?.error || "Daftar sesi belum bisa dimuat.");
-        return;
-      }
-      setSessions(Array.isArray(json?.sessions) ? json.sessions : []);
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [readJson]);
+    setOrigin(window.location.origin);
+    loadSessions();
+    loadBankQuestions();
+  }, [loadSessions]);
 
   async function createSession() {
     setStatus(null);
@@ -155,32 +145,20 @@ export default function AdminPage() {
     const res = await fetch("/api/session/create", { method: "POST" });
     const json = await readJson(res);
     if (!res.ok) {
-      toast.error("Gagal membuat sesi", {
-        id: "create-session",
-        description: json?.error || "Belum bisa bikin sesi.",
-      });
-      setStatus(json?.error || "Belum bisa bikin sesi.");
+      toast.error("Gagal membuat sesi", { id: "create-session", description: json?.error || "Error unknown" });
+      setStatus(json?.error);
       setBusy(false);
       return;
     }
-    if (!json?.session) {
-      toast.error("Error", {
-        id: "create-session",
-        description: "Respons server belum valid.",
-      });
-      setStatus("Respons server belum valid.");
-      setBusy(false);
-      return;
-    }
+    
+    if (json?.session) {
     setCode(json.session.code);
     setSessionId(json.session.id);
     setEndedAt(json.session.ended_at ?? null);
     setManualCode(json.session.code);
     await loadSessions();
-    toast.success("Sesi berhasil dibuat!", {
-      id: "create-session",
-      description: `Kode sesi: ${json.session.code}`,
-    });
+      toast.success("Sesi berhasil dibuat!", { id: "create-session", description: `Kode: ${json.session.code}` });
+    }
     setBusy(false);
   }
 
@@ -193,33 +171,19 @@ export default function AdminPage() {
 
     const res = await fetch(`/api/session/${inputCode}`);
     const json = await readJson(res);
-    if (!res.ok) {
-      toast.error("Sesi tidak ditemukan", {
-        id: "load-session",
-        description: json?.error || "Sesi belum ketemu.",
-      });
-      setStatus(json?.error || "Sesi belum ketemu.");
+    if (!res.ok || !json?.session) {
+      toast.error("Sesi tidak ditemukan", { id: "load-session", description: json?.error });
+      setStatus(json?.error || "Sesi tidak ditemukan");
       setBusy(false);
       return;
     }
-    if (!json?.session) {
-      toast.error("Error", {
-        id: "load-session",
-        description: "Respons server belum valid.",
-      });
-      setStatus("Respons server belum valid.");
-      setBusy(false);
-      return;
-    }
+
     setCode(json.session.code);
     setSessionId(json.session.id);
     setEndedAt(json.session.ended_at ?? null);
     setStatus(null);
     await loadSessions();
-    toast.success("Sesi berhasil dimuat!", {
-      id: "load-session",
-      description: `Kode: ${json.session.code}`,
-    });
+    toast.success("Sesi berhasil dimuat!", { id: "load-session", description: `Kode: ${json.session.code}` });
     setBusy(false);
   }
 
@@ -234,87 +198,20 @@ export default function AdminPage() {
       setStatus("Pertanyaan belum bisa dimuat.");
       return;
     }
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setQuestions(((data as any) ?? []).map((q: any) => ({ ...q, options: q.options as string[] })));
   }, []);
 
   useEffect(() => {
-    if (!sessionId) return;
+    if (sessionId) loadQuestions(sessionId);
+  }, [sessionId, loadQuestions]);
 
-    let cancelled = false;
-
-    (async () => {
-      const { data, error } = await supabase
-        .from("questions")
-        .select("id, order_no, question, options, correct_index, points")
-        .eq("session_id", sessionId)
-        .order("order_no", { ascending: true });
-
-      if (cancelled) return;
-
-      if (error) {
-        setStatus("Pertanyaan belum bisa dimuat.");
-        return;
-      }
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setQuestions(((data as any) ?? []).map((q: any) => ({ ...q, options: q.options as string[] })));
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [sessionId]);
-
-  async function addQuestion() {
-    if (!code) {
-      toast.error("Buat sesi dulu", {
-        description: "Buat atau muat sesi dulu ya.",
-      });
-      setStatus("Buat atau muat sesi dulu ya.");
-      return;
-    }
-    if (endedAt) {
-      toast.warning("Sesi sudah selesai", {
-        description: "Tidak bisa menambah pertanyaan.",
-      });
-      setStatus("Sesi sudah selesai.");
-      return;
-    }
-
-    const trimmed = options.map((opt) => opt.trim());
-    const filled = trimmed.filter(Boolean);
-    const hasGap = trimmed.slice(0, filled.length).some((opt) => !opt);
-
-    if (!questionText.trim()) {
-      toast.error("Pertanyaan kosong", {
-        description: "Pertanyaan wajib diisi.",
-      });
-      setStatus("Pertanyaan wajib diisi.");
-      return;
-    }
-    if (filled.length < 2) {
-      toast.error("Opsi kurang", {
-        description: "Minimal 2 opsi jawaban.",
-      });
-      setStatus("Minimal 2 opsi jawaban.");
-      return;
-    }
-    if (hasGap) {
-      toast.error("Urutan opsi salah", {
-        description: "Isi opsi dari atas ke bawah.",
-      });
-      setStatus("Isi opsi dari atas ke bawah.");
-      return;
-    }
-    if (correctIndex < 0 || correctIndex >= filled.length) {
-      toast.error("Jawaban benar belum dipilih", {
-        description: "Opsi benar belum valid.",
-      });
-      setStatus("Opsi benar belum valid.");
-      return;
-    }
+  async function addQuestionToSession() {
+    if (!code) return toast.error("Buat sesi dulu");
+    if (endedAt) return toast.warning("Sesi sudah selesai");
+    
+    const valid = validateQuestionForm();
+    if (!valid) return;
 
     setBusy(true);
     toast.loading("Menambahkan pertanyaan...", { id: "add-question" });
@@ -325,47 +222,27 @@ export default function AdminPage() {
       body: JSON.stringify({
         code,
         question: questionText,
-        options: filled,
+        options: valid.filled,
         correct_index: correctIndex,
         points,
       }),
     });
+    
     const json = await readJson(res);
     if (!res.ok) {
-      toast.error("Gagal menambah pertanyaan", {
-        id: "add-question",
-        description: json?.error || "Belum bisa menambah pertanyaan.",
-      });
-      setStatus(json?.error || "Belum bisa menambah pertanyaan.");
-      setBusy(false);
-      return;
-    }
-    if (!json?.question) {
-      toast.error("Error", {
-        id: "add-question",
-        description: "Respons server belum valid.",
-      });
-      setStatus("Respons server belum valid.");
+      toast.error("Gagal menambah pertanyaan", { id: "add-question", description: json?.error });
       setBusy(false);
       return;
     }
 
-    setQuestionText("");
-    setOptions(emptyOptions);
-    setCorrectIndex(0);
-    setPoints(100);
-    setStatus(null);
+    resetForm();
     if (sessionId) await loadQuestions(sessionId);
-    toast.success("Pertanyaan berhasil ditambahkan!", {
-      id: "add-question",
-      description: `${filled.length} opsi jawaban`,
-    });
+    toast.success("Pertanyaan berhasil ditambahkan!", { id: "add-question" });
     setBusy(false);
   }
 
   async function endSession() {
     if (!code) return;
-    setStatus(null);
     setBusy(true);
     toast.loading("Mengakhiri sesi...", { id: "end-session" });
 
@@ -375,32 +252,133 @@ export default function AdminPage() {
       body: JSON.stringify({ code }),
     });
     const json = await readJson(res);
-    if (!res.ok) {
-      toast.error("Gagal mengakhiri sesi", {
-        id: "end-session",
-        description: json?.error || "Belum bisa mengakhiri sesi.",
-      });
-      setStatus(json?.error || "Belum bisa mengakhiri sesi.");
-      setBusy(false);
-      return;
+    
+    if (res.ok && json?.session) {
+      setEndedAt(json.session.ended_at ?? null);
+      await loadSessions();
+      toast.success("Sesi berhasil diakhiri!", { id: "end-session" });
+    } else {
+      toast.error("Gagal mengakhiri sesi", { id: "end-session" });
     }
-    if (!json?.session) {
-      toast.error("Error", {
-        id: "end-session",
-        description: "Respons server belum valid.",
-      });
-      setStatus("Respons server belum valid.");
       setBusy(false);
-      return;
+  }
+
+  // --- Bank Logic ---
+
+  async function loadBankQuestions() {
+    const res = await fetch("/api/bank/list");
+    const json = await readJson(res);
+    if (res.ok) {
+      setBankQuestions(json.questions || []);
     }
-    setEndedAt(json.session.ended_at ?? null);
-    setStatus(null);
-    await loadSessions();
-    toast.success("Sesi berhasil diakhiri!", {
-      id: "end-session",
-      description: "Peserta tidak bisa menjawab lagi",
+  }
+
+  async function addQuestionToBank() {
+    const valid = validateQuestionForm();
+    if (!valid) return;
+
+    setBusy(true);
+    toast.loading("Menyimpan ke Bank Soal...", { id: "bank-create" });
+
+    const res = await fetch("/api/bank/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question: questionText,
+        options: valid.filled,
+        correct_index: correctIndex,
+        points,
+      }),
     });
+
+    const json = await readJson(res);
+    if (res.ok) {
+      resetForm();
+      await loadBankQuestions();
+      toast.success("Tersimpan di Bank Soal", { id: "bank-create" });
+    } else {
+      toast.error("Gagal menyimpan", { id: "bank-create", description: json?.error });
+    }
+      setBusy(false);
+  }
+
+  async function deleteBankQuestion(id: string) {
+    if(!confirm("Yakin hapus soal ini dari Bank?")) return;
+    
+    setBusy(true);
+    const res = await fetch("/api/bank/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    
+    if (res.ok) {
+      await loadBankQuestions();
+      toast.success("Soal dihapus dari Bank");
+    } else {
+      toast.error("Gagal menghapus soal");
+    }
     setBusy(false);
+  }
+
+  async function importFromBank() {
+    if (!code || selectedBankIds.size === 0) return;
+    
+    setBusy(true);
+    toast.loading("Mengimpor soal...", { id: "import" });
+
+    const res = await fetch("/api/question/import", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        code,
+        bank_ids: Array.from(selectedBankIds),
+      }),
+    });
+
+    const json = await readJson(res);
+    if (res.ok) {
+      if (sessionId) await loadQuestions(sessionId);
+      setSelectedBankIds(new Set());
+      setIsImportModalOpen(false);
+      toast.success(`Berhasil impor ${json.count} soal!`, { id: "import" });
+    } else {
+      toast.error("Gagal impor soal", { id: "import", description: json?.error });
+    }
+    setBusy(false);
+  }
+
+  // --- Helpers ---
+
+  function validateQuestionForm() {
+    const trimmed = options.map((opt) => opt.trim());
+    const filled = trimmed.filter(Boolean);
+    const hasGap = trimmed.slice(0, filled.length).some((opt) => !opt);
+
+    if (!questionText.trim()) {
+      toast.error("Pertanyaan wajib diisi");
+      return null;
+    }
+    if (filled.length < 2) {
+      toast.error("Minimal 2 opsi jawaban");
+      return null;
+    }
+    if (hasGap) {
+      toast.error("Isi opsi dari atas ke bawah");
+      return null;
+    }
+    if (correctIndex < 0 || correctIndex >= filled.length) {
+      toast.error("Pilih jawaban benar");
+      return null;
+    }
+    return { filled };
+  }
+
+  function resetForm() {
+    setQuestionText("");
+    setOptions(emptyOptions);
+    setCorrectIndex(0);
+    setPoints(100);
   }
 
   function updateOption(index: number, value: string) {
@@ -413,9 +391,7 @@ export default function AdminPage() {
   function copyText(text: string) {
     if (!text) return;
     navigator.clipboard?.writeText(text);
-    toast.success("Tersalin!", {
-      description: "Text sudah disalin ke clipboard",
-    });
+    toast.success("Tersalin!");
   }
 
   const buildQrBlob = useCallback(async (size = 512) => {
@@ -480,15 +456,10 @@ export default function AdminPage() {
         document.body.appendChild(link);
         link.click();
         link.remove();
-        setTimeout(() => URL.revokeObjectURL(link.href), 250);
-        toast.success("QR tersimpan", {
-          description: "File QR disimpan ke perangkat.",
-        });
+        toast.success("QR tersimpan");
       }
-    } catch (error) {
-      toast.error("Gagal membagikan QR", {
-        description: error instanceof Error ? error.message : "Coba ulangi.",
-      });
+    } catch {
+      toast.error("Gagal membagikan QR");
     } finally {
       setQrBusy(false);
     }
@@ -507,356 +478,339 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white px-4 sm:px-6 py-12 sm:py-16 lg:py-20">
-      <div className="mx-auto max-w-7xl space-y-10 sm:space-y-16">
-        <header className="text-center space-y-4 sm:space-y-6">
-          {/* Logo */}
-          <div className="flex justify-center">
-            <div className="relative w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28">
-              <NextImage
-                src="/logo1.png"
-                alt="Logo"
-                fill
-                className="object-contain"
-                priority
-              />
+    <main className="min-h-screen bg-slate-50 px-4 sm:px-6 py-8">
+      <div className="mx-auto max-w-7xl space-y-8">
+        {/* Header */}
+        <header className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-4 rounded-3xl border border-slate-100 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="relative w-12 h-12">
+              <NextImage src="/logo1.png" alt="Logo" fill className="object-contain" priority />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-slate-900">Selamat Datang</h1>
+              <p className="text-sm text-slate-500">Kelola kuis dan bank soal</p>
             </div>
           </div>
-
-          {/* Title & Logout */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-slate-900 leading-tight">
-              Admin Dashboard
-            </h1>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLogout}
-              className="rounded-full sm:mt-2"
-            >
+          <div className="flex items-center gap-3">
+             <div className="bg-slate-100 p-1 rounded-full flex gap-1">
+                <button
+                  onClick={() => setActiveTab("session")}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    activeTab === "session" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  Sesi Aktif
+                </button>
+                <button
+                  onClick={() => setActiveTab("bank")}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    activeTab === "bank" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  Bank Soal
+                </button>
+             </div>
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="rounded-full">
               Logout
             </Button>
           </div>
-          <p className="text-base sm:text-lg lg:text-xl text-slate-500 max-w-2xl mx-auto px-4">
-            Kelola sesi quiz dengan mudah
-          </p>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 relative">
-          {/* Divider vertikal di tengah */}
-          <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 w-px bg-slate-200 -translate-x-1/2"></div>
-
-          {/* Kolom Kiri: Sesi & Tambah Pertanyaan */}
+        {activeTab === "session" ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="space-y-8 lg:pr-8">
+               {/* Sesi Section */}
             <Section>
               <div className="flex items-center justify-between mb-6">
-                <SectionHeader title="Sesi" subtitle="Buat sesi baru atau muat yang sudah ada" />
+                  <SectionHeader title="Kontrol Sesi" subtitle="Kelola sesi quiz yang berjalan" />
                 <StatusBadge status={sessionStatus} />
               </div>
 
           <div className="space-y-4">
             <div className="flex flex-col gap-3">
-              <Button
-                onClick={createSession}
-                disabled={busy}
-                size="lg"
-                className="rounded-full px-8 text-base font-semibold shadow-sm hover:shadow-md transition-all w-full sm:w-auto"
-              >
+                    {!code ? (
+                         <>
+                            <Button onClick={createSession} disabled={busy} size="lg" className="w-full rounded-full">
                 Buat Sesi Baru
               </Button>
               <div className="flex gap-2">
-                <Input
-                  value={manualCode}
-                  onChange={(e) => setManualCode(e.target.value.toUpperCase())}
-                  placeholder="Kode sesi"
-                  className="rounded-full border-slate-200 h-11 text-base"
-                />
-                <Button
-                  variant="outline"
-                  onClick={loadSession}
-                  disabled={busy}
-                  size="lg"
-                  className="rounded-full px-6 sm:px-8 font-semibold whitespace-nowrap"
-                >
-                  Muat
-                </Button>
+                                <Input value={manualCode} onChange={(e) => setManualCode(e.target.value.toUpperCase())} placeholder="Kode sesi" className="rounded-full" />
+                                <Button variant="outline" onClick={loadSession} disabled={busy} className="rounded-full">Muat</Button>
               </div>
-            </div>
-
-            {code && (
+                        </>
+                    ) : (
               <div className="bg-slate-50 rounded-2xl p-4 space-y-1">
                 <InfoBox label="Kode Sesi" value={code} onCopy={() => copyText(code)} />
                 <InfoBox label="Link Peserta" value={joinUrl} onCopy={() => copyText(joinUrl)} />
                 <InfoBox label="Link Layar" value={screenUrl} onCopy={() => copyText(screenUrl)} />
 
-                {joinUrl && (
-                  <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
-                    <div className="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wider font-medium">
-                      QR Peserta
+                             <div className="pt-4 flex justify-between items-center">
+                                 {!endedAt ? (
+                                     <Button variant="destructive" size="sm" onClick={endSession} disabled={busy} className="rounded-full h-8 text-xs">Akhiri Sesi</Button>
+                                 ) : (
+                                     <span className="text-sm text-slate-500">Sesi telah berakhir</span>
+                                 )}
+                                 <Button variant="outline" size="sm" onClick={() => {setCode(null); setSessionId(null); setEndedAt(null);}} className="rounded-full h-8 text-xs">Tutup</Button>
+                             </div>
+                             
+                             {/* QR Code Toggle / Display logic simplified for brevity - kept core features */}
+                             {joinUrl && !endedAt && (
+                                <div className="mt-4 pt-4 border-t border-slate-200">
+                                   <div className="text-center mb-2 text-xs text-slate-500">QR CODE PESERTA</div>
+                                   <div ref={qrRef} className="flex justify-center bg-white p-2 rounded-xl w-fit mx-auto border">
+                                      <QRCode value={joinUrl} size={120} />
                     </div>
-                    <div ref={qrRef} className="mt-3 flex justify-center">
-                      <div className="rounded-xl border border-slate-200 bg-white p-3">
-                        <QRCode value={joinUrl} size={180} bgColor="#FFFFFF" fgColor="#111111" />
+                                   <div className="text-center mt-2">
+                                      <Button variant="ghost" size="sm" onClick={shareQr} disabled={qrBusy} className="text-xs h-7">Simpan QR</Button>
                       </div>
                     </div>
-                    <p className="mt-3 text-xs text-slate-500 text-center">
-                      Scan untuk masuk ke sesi quiz
-                    </p>
-                    <div className="mt-4 flex justify-center">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={shareQr}
-                        disabled={qrBusy}
-                        className="rounded-full text-xs sm:text-sm"
-                      >
-                        {qrBusy ? "Menyiapkan..." : "Share QR"}
-                      </Button>
+                             )}
+                         </div>
+                    )}
                     </div>
                   </div>
-                )}
+              </Section>
 
-                <div className="flex items-center justify-between pt-4">
-                  <p className="text-xs sm:text-sm text-slate-500">
-                    {endedAt ? "Sesi sudah selesai" : "Sesi sedang berjalan"}
-                  </p>
-                  {!endedAt && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={endSession}
-                      disabled={busy}
-                      className="rounded-full text-xs sm:text-sm h-8 sm:h-9 px-4 sm:px-5 font-medium"
-                    >
-                      Akhiri Sesi
+              {/* Tambah Pertanyaan Section */}
+              <Section>
+                <div className="flex items-center justify-between mb-6">
+                  <SectionHeader title="Tambah Pertanyaan" subtitle="Ke Sesi Ini" />
+                  {code && !endedAt && (
+                      <Button variant="secondary" size="sm" onClick={() => setIsImportModalOpen(true)} className="rounded-full text-xs">
+                          Ambil dari Bank Soal
                     </Button>
                   )}
                 </div>
+
+                {endedAt ? (
+                  <div className="text-sm text-slate-500 bg-slate-100 p-4 rounded-xl">Sesi sudah selesai.</div>
+                ) : (
+                   <div className="space-y-4">
+                     <textarea
+                        value={questionText}
+                        onChange={(e) => setQuestionText(e.target.value)}
+                        placeholder="Tulis pertanyaan..."
+                        disabled={busy || !code}
+                        className="w-full rounded-2xl border border-slate-200 p-3 text-sm focus:ring-2 focus:ring-slate-900 outline-none"
+                        rows={3}
+                     />
+                     <div className="grid grid-cols-2 gap-2">
+                        {options.map((opt, i) => (
+                           <Input key={i} value={opt} onChange={(e) => updateOption(i, e.target.value)} placeholder={`Opsi ${i+1}`} disabled={busy || !code} className="text-sm rounded-xl" />
+                        ))}
+                     </div>
+                     <div className="grid grid-cols-2 gap-4">
+                        <select
+                            value={correctIndex}
+                            onChange={(e) => setCorrectIndex(Number(e.target.value))}
+                            disabled={busy || !code}
+                            className="w-full rounded-xl border border-slate-200 p-2 text-sm bg-white"
+                        >
+                            {options.map((_, i) => <option key={i} value={i}>Jawaban: Opsi {i+1}</option>)}
+                        </select>
+                        <Input type="number" value={points} onChange={(e) => setPoints(Number(e.target.value))} disabled={busy || !code} className="text-sm rounded-xl" placeholder="Poin" />
+                     </div>
+                     <Button onClick={addQuestionToSession} disabled={busy || !code} className="w-full rounded-full">Tambah ke Sesi</Button>
               </div>
             )}
+              </Section>
+            </div>
 
-            {status && (
-              <div className="bg-slate-100 rounded-2xl px-6 py-4 text-sm text-slate-600">
-                {status}
+            {/* Kanan: List Pertanyaan Sesi & Riwayat */}
+            <div className="space-y-8 lg:pl-8">
+               <Section>
+                  <SectionHeader title={`Pertanyaan Sesi (${questions.length})`} subtitle="Daftar soal aktif" />
+                  <div className="mt-4 space-y-3 max-h-[500px] overflow-y-auto pr-1">
+                     {questions.length === 0 ? (
+                        <p className="text-center text-slate-400 text-sm py-8">Belum ada pertanyaan</p>
+                     ) : (
+                        questions.map((q) => (
+                           <div key={q.id} className="p-4 border rounded-2xl bg-slate-50">
+                              <div className="flex justify-between items-start mb-2">
+                                 <span className="font-bold text-sm bg-white px-2 py-1 rounded border">Q{q.order_no}</span>
+                                 <span className="text-xs font-semibold text-slate-500">{q.points} pts</span>
+                              </div>
+                              <p className="font-medium text-slate-800 text-sm mb-2">{q.question}</p>
+                              <div className="grid grid-cols-2 gap-2">
+                                 {q.options.map((o, i) => (
+                                    <div key={i} className={`text-xs p-2 rounded border ${i === q.correct_index ? 'bg-green-100 border-green-200 text-green-800' : 'bg-white border-slate-100'}`}>
+                                       {o}
+                                    </div>
+                                 ))}
+                              </div>
               </div>
+                        ))
             )}
           </div>
             </Section>
 
             <Section>
-              <div className="mb-6">
-                <SectionHeader title="Tambah Pertanyaan" subtitle="Buat pertanyaan baru untuk sesi ini" />
+                   <SectionHeader title="Riwayat Sesi" />
+                   <div className="mt-4 space-y-2 max-h-[300px] overflow-y-auto">
+                       {sessions.map(s => (
+                           <div key={s.id} onClick={() => { setManualCode(s.code); setCode(s.code); setSessionId(s.id); setEndedAt(s.ended_at ?? null); }} className="p-3 border rounded-xl hover:bg-slate-50 cursor-pointer flex justify-between items-center">
+                               <div>
+                                   <div className="font-bold text-sm">{s.title || "Sesi Tanpa Judul"}</div>
+                                   <div className="text-xs text-slate-500">{s.code}</div>
+                               </div>
+                               <span className={`text-[10px] px-2 py-1 rounded-full ${s.ended_at ? 'bg-slate-100 text-slate-500' : 'bg-green-100 text-green-700'}`}>
+                                   {s.ended_at ? 'Selesai' : 'Aktif'}
+                               </span>
+                           </div>
+                       ))}
               </div>
-
-          {endedAt && (
-            <div className="bg-slate-100 rounded-2xl px-6 py-4 text-sm text-slate-600 mb-6">
-              Sesi sudah selesai. Pertanyaan tidak bisa ditambah.
+               </Section>
             </div>
-          )}
-
-          <div className="space-y-5">
-            <div>
-              <label className="block text-sm sm:text-base font-medium text-slate-700 mb-3">
-                Pertanyaan
-              </label>
+          </div>
+        ) : (
+          /* TAB BANK SOAL */
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+             <div className="lg:col-span-1 space-y-6">
+                <Section>
+                    <SectionHeader title="Buat Master Soal" subtitle="Simpan ke Bank Soal" />
+                    <div className="mt-6 space-y-4">
               <textarea
                 value={questionText}
                 onChange={(e) => setQuestionText(e.target.value)}
-                placeholder="Tulis pertanyaan di sini..."
-                disabled={busy || !code || !!endedAt}
-                className="min-h-[100px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm sm:text-base outline-none focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm sm:text-base font-medium text-slate-700 mb-3">
-                Opsi Jawaban
-              </label>
-              <div className="grid gap-3 sm:grid-cols-2">
+                            placeholder="Tulis pertanyaan master..."
+                            disabled={busy}
+                            className="w-full rounded-2xl border border-slate-200 p-3 text-sm focus:ring-2 focus:ring-slate-900 outline-none"
+                            rows={4}
+                         />
+                         <div className="space-y-2">
                 {options.map((opt, i) => (
-                  <Input
-                    key={i}
-                    value={opt}
-                    onChange={(e) => updateOption(i, e.target.value)}
-                    placeholder={`Opsi ${i + 1}`}
-                    disabled={busy || !code || !!endedAt}
-                    className="rounded-xl border-slate-200 h-11 text-sm sm:text-base"
-                  />
+                               <Input key={i} value={opt} onChange={(e) => updateOption(i, e.target.value)} placeholder={`Opsi ${i+1}`} disabled={busy} className="text-sm rounded-xl" />
                 ))}
               </div>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="block text-sm sm:text-base font-medium text-slate-700 mb-3">
-                  Jawaban Benar
-                </label>
+                         <div className="grid grid-cols-2 gap-4">
                 <select
-                  value={String(correctIndex)}
+                                value={correctIndex}
                   onChange={(e) => setCorrectIndex(Number(e.target.value))}
-                  disabled={busy || !code || !!endedAt}
-                  className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm sm:text-base outline-none focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all"
-                >
-                  {options.map((_, i) => (
-                    <option key={i} value={i}>
-                      Opsi {i + 1}
-                    </option>
-                  ))}
+                                disabled={busy}
+                                className="w-full rounded-xl border border-slate-200 p-2 text-sm bg-white"
+                            >
+                                {options.map((_, i) => <option key={i} value={i}>Jawaban: Opsi {i+1}</option>)}
                 </select>
+                            <Input type="number" value={points} onChange={(e) => setPoints(Number(e.target.value))} disabled={busy} className="text-sm rounded-xl" placeholder="Poin" />
               </div>
-
-              <div>
-                <label className="block text-sm sm:text-base font-medium text-slate-700 mb-3">
-                  Poin
-                </label>
-                <Input
-                  type="number"
-                  value={points}
-                  onChange={(e) => setPoints(Number(e.target.value))}
-                  min={0}
-                  disabled={busy || !code || !!endedAt}
-                  className="rounded-xl border-slate-200 h-11 text-sm sm:text-base"
-                />
-              </div>
-            </div>
-
-            <Button
-              onClick={addQuestion}
-              disabled={busy || !code || !!endedAt}
-              size="lg"
-              className="w-full rounded-full text-base font-semibold shadow-sm hover:shadow-md transition-all"
-            >
-              Tambah Pertanyaan
-            </Button>
+                         <Button onClick={addQuestionToBank} disabled={busy} className="w-full rounded-full bg-indigo-600 hover:bg-indigo-700">Simpan ke Bank</Button>
               </div>
             </Section>
           </div>
 
-          {/* Kolom Kanan: Riwayat Sesi & Bank Pertanyaan */}
-          <div className="space-y-8 lg:pl-8">
-            <Section>
-              <div className="flex items-center justify-between mb-6">
-                <SectionHeader title="Riwayat Sesi" subtitle="Sesi yang pernah dibuat" />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={loadSessions}
-                  disabled={busy}
-                  className="rounded-full h-8 sm:h-9 text-xs sm:text-sm px-3 sm:px-4 font-medium"
-                >
-                  Refresh
-                </Button>
+             <div className="lg:col-span-2">
+                <Section className="h-full">
+                    <div className="flex justify-between items-center mb-6">
+                        <SectionHeader title={`Bank Soal (${bankQuestions.length})`} subtitle="Gudang pertanyaan" />
+                        <Button variant="outline" size="sm" onClick={loadBankQuestions} className="rounded-full text-xs">Refresh</Button>
               </div>
 
-              <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2
-                [&::-webkit-scrollbar]:w-2
-                [&::-webkit-scrollbar-track]:bg-slate-100
-                [&::-webkit-scrollbar-track]:rounded-full
-                [&::-webkit-scrollbar-thumb]:bg-slate-300
-                [&::-webkit-scrollbar-thumb]:rounded-full
-                [&::-webkit-scrollbar-thumb]:hover:bg-slate-400">
-                {sessions.map((s) => (
-                  <div
-                    key={s.id}
-                    className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-5 py-4 hover:border-slate-200 hover:shadow-sm transition-all cursor-pointer"
-                    onClick={() => {
-                      setManualCode(s.code);
-                      setCode(s.code);
-                      setSessionId(s.id);
-                      setEndedAt(s.ended_at ?? null);
-                    }}
-                  >
-                    <div className="space-y-1.5">
-                      <div className="font-semibold text-slate-900 text-sm sm:text-base">{s.title}</div>
-                      <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-500">
-                        <span className="font-mono bg-white px-2 py-1 rounded border border-slate-200 text-xs sm:text-sm">{s.code}</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[800px] overflow-y-auto">
+                        {bankQuestions.map((q) => (
+                           <div key={q.id} className="p-5 border border-slate-100 rounded-2xl bg-white shadow-sm hover:shadow-md transition-all relative group">
+                              <button 
+                                onClick={() => deleteBankQuestion(q.id)}
+                                className="absolute top-3 right-3 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                              </button>
+                              
+                              <div className="pr-6">
+                                  <p className="font-medium text-slate-800 text-sm mb-3 line-clamp-3">{q.question}</p>
+                              </div>
+                              <div className="space-y-1.5 mb-3">
+                                 {q.options.map((o, i) => (
+                                    <div key={i} className={`text-xs px-2 py-1.5 rounded flex items-center gap-2 ${i === q.correct_index ? 'bg-green-50 text-green-700 font-medium' : 'bg-slate-50 text-slate-500'}`}>
+                                       <span className="w-4 h-4 rounded-full border flex items-center justify-center text-[9px] shrink-0">
+                                            {String.fromCharCode(65 + i)}
+                                       </span>
+                                       <span className="truncate">{o}</span>
+                                    </div>
+                                 ))}
+                              </div>
+                              <div className="flex justify-between items-center pt-2 border-t border-slate-50">
+                                 <span className="text-xs text-slate-400 font-medium">{q.points} Poin</span>
+                                 <span className="text-[10px] text-slate-300">ID: {q.id.slice(0,6)}</span>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className={`text-[10px] sm:text-xs uppercase tracking-wider font-medium ${
-                        s.ended_at ? "text-slate-400" : "text-green-600"
-                      }`}>
-                        {s.ended_at ? "Selesai" : "Aktif"}
-                      </span>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setManualCode(s.code);
-                          setCode(s.code);
-                          setSessionId(s.id);
-                          setEndedAt(s.ended_at ?? null);
-                        }}
-                        className="rounded-full h-7 sm:h-8 text-xs sm:text-sm font-medium"
-                      >
-                        Pilih
-                      </Button>
+                        ))}
                     </div>
+                    {bankQuestions.length === 0 && (
+                        <div className="text-center py-20 text-slate-400">
+                            Bank soal masih kosong.
+                        </div>
+                    )}
+                </Section>
                   </div>
-                ))}
-                {sessions.length === 0 && (
-                  <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-8 text-center text-sm text-slate-400">
-                    Belum ada sesi tersimpan
                   </div>
                 )}
               </div>
-            </Section>
 
-            <Section>
-              <div className="flex items-center justify-between mb-6">
-                <SectionHeader title="Bank Pertanyaan" subtitle="Daftar pertanyaan yang sudah dibuat" />
-                <div className="bg-slate-100 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium text-slate-600">
-                  {questions.length} pertanyaan
-                </div>
+      {/* Import Modal */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+            <div className="bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl">
+                <div className="p-6 border-b flex justify-between items-center">
+                    <h3 className="text-xl font-bold">Pilih dari Bank Soal</h3>
+                    <button onClick={() => setIsImportModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
               </div>
 
-              <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2
-                [&::-webkit-scrollbar]:w-2
-                [&::-webkit-scrollbar-track]:bg-slate-100
-                [&::-webkit-scrollbar-track]:rounded-full
-                [&::-webkit-scrollbar-thumb]:bg-slate-300
-                [&::-webkit-scrollbar-thumb]:rounded-full
-                [&::-webkit-scrollbar-thumb]:hover:bg-slate-400">
-                {questions.map((q) => (
+                <div className="p-6 overflow-y-auto flex-1 bg-slate-50">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {bankQuestions.map(q => {
+                            const isSelected = selectedBankIds.has(q.id);
+                            return (
                   <div
                     key={q.id}
-                    className="rounded-2xl border border-slate-100 bg-white p-5 sm:p-6 hover:border-slate-300 hover:shadow-md transition-all"
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-xs sm:text-sm font-medium text-slate-400 bg-slate-50 px-3 py-1 rounded-full">Q{q.order_no}</span>
-                      <span className="text-xs sm:text-sm font-semibold text-slate-600 bg-amber-50 px-3 py-1 rounded-full">{q.points} poin</span>
+                                    onClick={() => {
+                                        const next = new Set(selectedBankIds);
+                                        if (isSelected) next.delete(q.id);
+                                        else next.add(q.id);
+                                        setSelectedBankIds(next);
+                                    }}
+                                    className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                                        isSelected 
+                                        ? "border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500" 
+                                        : "border-slate-200 bg-white hover:border-slate-300"
+                                    }`}
+                                >
+                                    <div className="flex justify-between gap-2 mb-2">
+                                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${isSelected ? 'bg-indigo-500 border-indigo-500' : 'border-slate-300'}`}>
+                                            {isSelected && <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                                        </div>
+                                        <span className="text-xs font-mono text-slate-400">{q.points} pts</span>
+                                    </div>
+                                    <p className="text-sm text-slate-800 line-clamp-2 mb-2">{q.question}</p>
+                                    <div className="text-xs text-slate-500 line-clamp-1">
+                                        {q.options.join(", ")}
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
-                    <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-slate-900 mb-4 sm:mb-5 leading-relaxed">{q.question}</h3>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {q.options.map((opt, i) => (
-                        <div
-                          key={`${q.id}-${i}`}
-                          className={`rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm border transition-all ${
-                            i === q.correct_index
-                              ? "bg-slate-900 text-white border-slate-900 shadow-lg"
-                              : "bg-slate-50 text-slate-700 border-slate-100 hover:border-slate-200"
-                          }`}
-                        >
-                          <div className="text-[10px] sm:text-xs uppercase tracking-wider opacity-60 mb-1">
-                            Opsi {i + 1}
-                          </div>
-                          <div className="font-medium text-xs sm:text-sm">{opt}</div>
+                     {bankQuestions.length === 0 && (
+                        <div className="text-center py-10 text-slate-500">
+                            Bank soal kosong. Isi dulu di tab Bank Soal.
                         </div>
-                      ))}
+                    )}
+                </div>
+
+                <div className="p-6 border-t bg-white rounded-b-3xl flex justify-between items-center">
+                    <div className="text-sm text-slate-600">
+                        Terpilih: <b>{selectedBankIds.size}</b> soal
+                    </div>
+                    <div className="flex gap-3">
+                        <Button variant="ghost" onClick={() => setIsImportModalOpen(false)} className="rounded-full">Batal</Button>
+                        <Button onClick={importFromBank} disabled={selectedBankIds.size === 0 || busy} className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white">
+                            Impor ke Sesi
+                        </Button>
                     </div>
                   </div>
-                ))}
-                {questions.length === 0 && (
-                  <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-12 text-center text-sm text-slate-400">
-                    Belum ada pertanyaan. Tambahkan dari form di atas.
-                  </div>
-                )}
-              </div>
-            </Section>
           </div>
         </div>
-      </div>
+      )}
     </main>
   );
 }
