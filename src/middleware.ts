@@ -8,6 +8,10 @@ const PROTECTED_API_ROUTES = [
   "/api/session/end",
   "/api/session/list",
   "/api/question/create",
+  "/api/question/import",
+  "/api/bank/create",
+  "/api/bank/delete",
+  "/api/bank/list",
 ];
 
 // Routes that should redirect to admin if already authenticated
@@ -64,6 +68,8 @@ export const config = {
     "/api/session/end",
     "/api/session/list",
     "/api/question/create",
+    "/api/question/import",
+    "/api/bank/:path*",
   ],
 };
 
