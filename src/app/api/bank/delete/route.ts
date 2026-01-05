@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 type Payload = {
   id: string;
@@ -11,7 +11,7 @@ export async function POST(req: Request) {
 
   if (!id) return NextResponse.json({ error: "ID pertanyaan wajib diisi" }, { status: 400 });
 
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from("question_bank")
     .delete()
     .eq("id", id);

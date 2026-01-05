@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function POST(req: Request) {
   const { code } = await req.json();
   const sessionCode = String(code || "").trim().toUpperCase();
   if (!sessionCode) return NextResponse.json({ error: "Kode sesi belum diisi" }, { status: 400 });
 
-  const { data: session, error: sErr } = await supabase
+  const { data: session, error: sErr } = await supabaseAdmin
     .from("sessions")
     .select("*")
     .eq("code", sessionCode)
@@ -15,7 +15,7 @@ export async function POST(req: Request) {
   if (sErr || !session) return NextResponse.json({ error: "Sesi tidak ditemukan" }, { status: 404 });
   if (session.ended_at) return NextResponse.json({ session });
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("sessions")
     .update({ ended_at: new Date().toISOString() })
     .eq("id", session.id)

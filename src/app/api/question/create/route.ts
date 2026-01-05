@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 type Payload = {
   code?: string;
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Opsi benar tidak valid" }, { status: 400 });
   }
 
-  const { data: session, error: sErr } = await supabase
+  const { data: session, error: sErr } = await supabaseAdmin
     .from("sessions")
     .select("id")
     .eq("code", code)
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
 
   if (sErr || !session) return NextResponse.json({ error: "Sesi tidak ditemukan" }, { status: 404 });
 
-  const { data: last } = await supabase
+  const { data: last } = await supabaseAdmin
     .from("questions")
     .select("order_no")
     .eq("session_id", session.id)
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
 
   const order_no = (last?.[0]?.order_no ?? 0) + 1;
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("questions")
     .insert({
       session_id: session.id,

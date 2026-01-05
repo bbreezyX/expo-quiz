@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 type Payload = {
   code: string;
@@ -15,7 +15,7 @@ export async function POST(req: Request) {
   if (bankIds.length === 0) return NextResponse.json({ error: "Pilih minimal 1 pertanyaan" }, { status: 400 });
 
   // 1. Get Session ID
-  const { data: session, error: sErr } = await supabase
+  const { data: session, error: sErr } = await supabaseAdmin
     .from("sessions")
     .select("id")
     .eq("code", code)
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   if (sErr || !session) return NextResponse.json({ error: "Sesi tidak ditemukan" }, { status: 404 });
 
   // 2. Get Bank Questions
-  const { data: bankQuestions, error: bErr } = await supabase
+  const { data: bankQuestions, error: bErr } = await supabaseAdmin
     .from("question_bank")
     .select("*")
     .in("id", bankIds);
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
   }
 
   // 3. Get Current Last Order No
-  const { data: last } = await supabase
+  const { data: last } = await supabaseAdmin
     .from("questions")
     .select("order_no")
     .eq("session_id", session.id)
@@ -44,10 +44,6 @@ export async function POST(req: Request) {
   let nextOrderNo = (last?.[0]?.order_no ?? 0) + 1;
 
   // 4. Prepare Insert Data
-  // Mapped based on selection order if preserved, or just list order
-  // To preserve selection order, we might need to sort bankQuestions based on bankIds index, 
-  // but for now simple insertion is fine.
-  
   const questionsToInsert = bankQuestions.map((q, idx) => ({
     session_id: session.id,
     order_no: nextOrderNo + idx,
@@ -57,7 +53,7 @@ export async function POST(req: Request) {
     points: q.points,
   }));
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("questions")
     .insert(questionsToInsert)
     .select();

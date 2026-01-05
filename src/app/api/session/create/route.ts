@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 function makeCode(len = 5) {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -9,7 +9,7 @@ function makeCode(len = 5) {
 export async function POST() {
   for (let i = 0; i < 5; i += 1) {
     const code = makeCode(5);
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("sessions")
       .insert({ code, title: "Expo Quiz" })
       .select("*")
