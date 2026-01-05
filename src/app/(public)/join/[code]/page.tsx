@@ -18,7 +18,7 @@ export default function JoinPage() {
   const [loading, setLoading] = useState(false);
 
   // Check if already joined this session
-  const { sessionCode, isAuthenticated, isLoading: authLoading } = useParticipantSession();
+  const { sessionCode, isAuthenticated, isLoading: authLoading, refresh } = useParticipantSession();
   
   useEffect(() => {
     // If already joined this session, redirect to quiz
@@ -52,6 +52,10 @@ export default function JoinPage() {
       id: "join-session",
       description: `Selamat datang, ${name}!`,
     });
+    
+    // Refresh auth state to ensure SWR cache is updated
+    await refresh();
+    
     router.push(`/quiz/${code}`);
     setLoading(false);
   }
