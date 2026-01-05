@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { AdminHeader } from "./components/AdminHeader";
 import { SessionControl } from "./components/SessionControl";
@@ -316,118 +317,36 @@ export default function AdminPage() {
           onLogout={handleLogout} 
         />
 
-        {activeTab === "session" ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="space-y-8 lg:pr-8">
-              <SessionControl
-                code={code}
-                endedAt={endedAt}
-                busy={busy}
-                manualCode={manualCode}
-                setManualCode={setManualCode}
-                onCreateSession={createSession}
-                onLoadSession={loadSession}
-                onEndSession={endSession}
-                onCloseSession={() => {
-                  setCode(null);
-                  setSessionId(null);
-                  setEndedAt(null);
-                }}
-              />
+        <AnimatePresence mode="wait">
+          {activeTab === "session" ? (
+            <motion.div
+              key="session"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.3 }}
+              className="grid grid-cols-1 lg:grid-cols-2 gap-8"
+            >
+              <div className="space-y-8 lg:pr-8">
+                <SessionControl
+                  code={code}
+                  endedAt={endedAt}
+                  busy={busy}
+                  manualCode={manualCode}
+                  setManualCode={setManualCode}
+                  onCreateSession={createSession}
+                  onLoadSession={loadSession}
+                  onEndSession={endSession}
+                  onCloseSession={() => {
+                    setCode(null);
+                    setSessionId(null);
+                    setEndedAt(null);
+                  }}
+                />
 
-              <QuestionForm
-                title="Tambah Pertanyaan"
-                subtitle="Ke Sesi Ini"
-                questionText={questionText}
-                setQuestionText={setQuestionText}
-                options={options}
-                setOptions={setOptions}
-                correctIndex={correctIndex}
-                setCorrectIndex={setCorrectIndex}
-                points={points}
-                setPoints={setPoints}
-                onSubmit={addQuestionToSession}
-                busy={busy}
-                disabled={!code || !!endedAt}
-                submitLabel="Tambah ke Sesi"
-                headerAction={
-                  code && !endedAt && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsImportModalOpen(true)}
-                      className="rounded-full text-xs font-medium border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="mr-1.5"
-                      >
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                      </svg>
-                      Ambil dari Bank Soal
-                    </Button>
-                  )
-                }
-                disabledContent={
-                  endedAt ? (
-                    <div className="flex flex-col items-center justify-center p-8 text-center bg-slate-50 rounded-2xl border border-slate-100">
-                      <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center mb-3">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="20"
-                          height="20"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="text-slate-400"
-                        >
-                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                        </svg>
-                      </div>
-                      <p className="text-slate-900 font-medium">Sesi Selesai</p>
-                      <p className="text-slate-500 text-xs mt-1">Tidak bisa menambah pertanyaan lagi.</p>
-                    </div>
-                  ) : null
-                }
-              />
-            </div>
-
-            <div className="space-y-8 lg:pl-8">
-              <SessionQuestionList questions={questions} />
-              
-              <SessionHistoryList 
-                sessions={sessions} 
-                currentSessionId={sessionId} 
-                onSelectSession={(s) => {
-                  setManualCode(s.code);
-                  setCode(s.code);
-                  setSessionId(s.id);
-                  setEndedAt(s.ended_at ?? null);
-                }} 
-              />
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-1 space-y-6">
-              <div className="sticky top-8">
                 <QuestionForm
-                  title="Input Soal Baru"
-                  subtitle="Isi detail pertanyaan"
+                  title="Tambah Pertanyaan"
+                  subtitle="Ke Sesi Ini"
                   questionText={questionText}
                   setQuestionText={setQuestionText}
                   options={options}
@@ -436,22 +355,120 @@ export default function AdminPage() {
                   setCorrectIndex={setCorrectIndex}
                   points={points}
                   setPoints={setPoints}
-                  onSubmit={addQuestionToBank}
+                  onSubmit={addQuestionToSession}
                   busy={busy}
-                  submitLabel={busy ? "Menyimpan..." : "Simpan ke Bank Soal"}
+                  disabled={!code || !!endedAt}
+                  submitLabel="Tambah ke Sesi"
+                  headerAction={
+                    code && !endedAt && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsImportModalOpen(true)}
+                        className="rounded-full text-xs font-medium border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="mr-1.5"
+                        >
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                          <polyline points="7 10 12 15 17 10" />
+                          <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        Ambil dari Bank Soal
+                      </Button>
+                    )
+                  }
+                  disabledContent={
+                    endedAt ? (
+                      <div className="flex flex-col items-center justify-center p-8 text-center bg-slate-50 rounded-2xl border border-slate-100">
+                        <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center mb-3">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="text-slate-400"
+                          >
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                          </svg>
+                        </div>
+                        <p className="text-slate-900 font-medium">Sesi Selesai</p>
+                        <p className="text-slate-500 text-xs mt-1">Tidak bisa menambah pertanyaan lagi.</p>
+                      </div>
+                    ) : null
+                  }
                 />
               </div>
-            </div>
 
-            <div className="lg:col-span-2">
-              <BankQuestionList 
-                questions={bankQuestions} 
-                onDelete={deleteBankQuestion} 
-                onRefresh={loadBankQuestions} 
-              />
-            </div>
-          </div>
-        )}
+              <div className="space-y-8 lg:pl-8">
+                <SessionQuestionList questions={questions} />
+                
+                <SessionHistoryList 
+                  sessions={sessions} 
+                  currentSessionId={sessionId} 
+                  onSelectSession={(s) => {
+                    setManualCode(s.code);
+                    setCode(s.code);
+                    setSessionId(s.id);
+                    setEndedAt(s.ended_at ?? null);
+                  }} 
+                />
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="bank"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+            >
+              <div className="lg:col-span-1 space-y-6">
+                <div className="sticky top-8">
+                  <QuestionForm
+                    title="Input Soal Baru"
+                    subtitle="Isi detail pertanyaan"
+                    questionText={questionText}
+                    setQuestionText={setQuestionText}
+                    options={options}
+                    setOptions={setOptions}
+                    correctIndex={correctIndex}
+                    setCorrectIndex={setCorrectIndex}
+                    points={points}
+                    setPoints={setPoints}
+                    onSubmit={addQuestionToBank}
+                    busy={busy}
+                    submitLabel={busy ? "Menyimpan..." : "Simpan ke Bank Soal"}
+                  />
+                </div>
+              </div>
+
+              <div className="lg:col-span-2">
+                <BankQuestionList 
+                  questions={bankQuestions} 
+                  onDelete={deleteBankQuestion} 
+                  onRefresh={loadBankQuestions} 
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <ImportQuestionModal

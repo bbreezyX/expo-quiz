@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Section, SectionHeader } from "./Common";
+import { motion } from "framer-motion";
 
 type QuestionFormProps = {
   title: string;
@@ -129,13 +130,15 @@ export function QuestionForm({
             </div>
           </div>
 
-          <Button
-            onClick={onSubmit}
-            disabled={busy || disabled}
-            className="w-full h-12 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold shadow-lg shadow-slate-200 transition-all active:scale-[0.98]"
-          >
-            {submitLabel}
-          </Button>
+          <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}>
+            <Button
+              onClick={onSubmit}
+              disabled={busy || disabled}
+              className="w-full h-12 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold shadow-lg shadow-slate-200 transition-all"
+            >
+              {submitLabel}
+            </Button>
+          </motion.div>
         </div>
       )}
     </Section>
