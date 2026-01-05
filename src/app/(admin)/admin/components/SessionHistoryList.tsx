@@ -9,6 +9,7 @@ export type SessionSummary = {
   title: string;
   created_at: string;
   ended_at: string | null;
+  participants?: { count: number }[];
 };
 
 type SessionHistoryListProps = {
@@ -81,6 +82,29 @@ export function SessionHistoryList({ sessions, currentSessionId, onSelectSession
                     >
                       {new Date(s.created_at).toLocaleDateString()}
                     </span>
+                    <div className={`flex items-center gap-1 ml-1 ${
+                        s.id === currentSessionId ? "text-slate-300" : "text-slate-400"
+                      }`}>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                      </svg>
+                      <span className="text-[10px]">
+                        {s.participants?.[0]?.count ?? 0}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">

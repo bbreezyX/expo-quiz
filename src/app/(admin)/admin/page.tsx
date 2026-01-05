@@ -13,6 +13,7 @@ import { SessionQuestionList, type Question } from "./components/SessionQuestion
 import { BankQuestionList } from "./components/BankQuestionList";
 import { SessionHistoryList, type SessionSummary } from "./components/SessionHistoryList";
 import { ImportQuestionModal } from "./components/ImportQuestionModal";
+import { DeleteConfirmationModal } from "./components/DeleteConfirmationModal";
 
 const emptyOptions = ["", "", "", ""];
 
@@ -39,6 +40,10 @@ export default function AdminPage() {
   const [bankQuestions, setBankQuestions] = useState<Question[]>([]);
   const [selectedBankIds, setSelectedBankIds] = useState<Set<string>>(new Set());
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  
+  // Delete Modal State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
   const readJson = useCallback(async (res: Response) => {
     const text = await res.text();
@@ -219,19 +224,26 @@ export default function AdminPage() {
     setBusy(false);
   }
 
-  async function deleteBankQuestion(id: string) {
-    if(!confirm("Yakin hapus soal ini dari Bank?")) return;
+  function handleDeleteBankQuestion(id: string) {
+    setItemToDelete(id);
+    setIsDeleteModalOpen(true);
+  }
+
+  async function confirmDeleteBankQuestion() {
+    if (!itemToDelete) return;
     
     setBusy(true);
     const res = await fetch("/api/bank/delete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
+      body: JSON.stringify({ id: itemToDelete }),
     });
     
     if (res.ok) {
       await loadBankQuestions();
       toast.success("Soal dihapus dari Bank");
+      setIsDeleteModalOpen(false);
+      setItemToDelete(null);
     } else {
       toast.error("Gagal menghapus soal");
     }
@@ -463,7 +475,7 @@ export default function AdminPage() {
               <div className="lg:col-span-2">
                 <BankQuestionList 
                   questions={bankQuestions} 
-                  onDelete={deleteBankQuestion} 
+                  onDelete={handleDeleteBankQuestion} 
                   onRefresh={loadBankQuestions} 
                 />
               </div>
@@ -479,6 +491,15 @@ export default function AdminPage() {
         selectedBankIds={selectedBankIds}
         setSelectedBankIds={setSelectedBankIds}
         onImport={importFromBank}
+        busy={busy}
+      />
+
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDeleteBankQuestion}
+        title="Hapus Soal?"
+        description="Soal ini akan dihapus permanen dari Bank Soal dan tidak bisa dikembalikan."
         busy={busy}
       />
     </main>
