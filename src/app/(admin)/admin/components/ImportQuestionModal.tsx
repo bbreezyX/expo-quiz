@@ -120,6 +120,19 @@ const checkmarkVariants: Variants = {
   },
 };
 
+const buttonVariants: Variants = {
+  hidden: { opacity: 0, scale: 0.9 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 400,
+      damping: 20,
+    },
+  },
+};
+
 export function ImportQuestionModal({
   isOpen,
   onClose,
@@ -155,7 +168,7 @@ export function ImportQuestionModal({
               variants={headerVariants}
               initial="hidden"
               animate="visible"
-              className="p-6 border-b flex justify-between items-center"
+              className="p-4 sm:p-6 border-b flex justify-between items-center"
             >
               <motion.h3
                 initial={{ opacity: 0, x: -20 }}
@@ -192,7 +205,7 @@ export function ImportQuestionModal({
               variants={gridContainerVariants}
               initial="hidden"
               animate="visible"
-              className="p-6 overflow-y-auto flex-1 bg-slate-50/50"
+              className="p-4 sm:p-6 overflow-y-auto flex-1 bg-slate-50/50"
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {bankQuestions.map((q) => {
@@ -345,13 +358,13 @@ export function ImportQuestionModal({
               variants={footerVariants}
               initial="hidden"
               animate="visible"
-              className="p-6 border-t bg-white rounded-b-3xl flex justify-between items-center"
+              className="p-4 sm:p-6 border-t bg-white rounded-b-3xl flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0"
             >
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.35 }}
-                className="text-sm text-slate-600"
+                className="text-sm text-slate-600 w-full sm:w-auto text-center sm:text-left"
               >
                 Terpilih:{" "}
                 <motion.b
@@ -364,23 +377,27 @@ export function ImportQuestionModal({
                 </motion.b>{" "}
                 soal
               </motion.div>
-              <div className="flex gap-3">
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button variant="ghost" onClick={onClose} className="rounded-full">
-                    Batal
-                  </Button>
+              <div className="flex gap-3 w-full sm:w-auto">
+                <motion.div variants={buttonVariants} className="flex-1 sm:flex-initial">
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full">
+                    <Button variant="ghost" onClick={onClose} className="rounded-full w-full sm:w-auto">
+                      Batal
+                    </Button>
+                  </motion.div>
                 </motion.div>
-                <motion.div
-                  whileHover={{ scale: selectedBankIds.size > 0 && !busy ? 1.05 : 1 }}
-                  whileTap={{ scale: selectedBankIds.size > 0 && !busy ? 0.95 : 1 }}
-                  animate={busy ? { scale: [1, 1.02, 1] } : {}}
-                  transition={busy ? { duration: 1, repeat: Infinity } : {}}
-                >
-                  <Button
-                    onClick={onImport}
-                    disabled={selectedBankIds.size === 0 || busy}
-                    className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200"
+                <motion.div variants={buttonVariants} className="flex-1 sm:flex-initial">
+                  <motion.div
+                    whileHover={{ scale: selectedBankIds.size > 0 && !busy ? 1.05 : 1 }}
+                    whileTap={{ scale: selectedBankIds.size > 0 && !busy ? 0.95 : 1 }}
+                    animate={busy ? { scale: [1, 1.02, 1] } : {}}
+                    transition={busy ? { duration: 1, repeat: Infinity } : {}}
+                    className="w-full"
                   >
+                    <Button
+                      onClick={onImport}
+                      disabled={selectedBankIds.size === 0 || busy}
+                      className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200 w-full sm:w-auto"
+                    >
                     <AnimatePresence mode="wait">
                       {busy ? (
                         <motion.span

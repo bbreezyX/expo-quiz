@@ -137,7 +137,7 @@ export function DeleteConfirmationModal({
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="w-full max-w-sm bg-white rounded-2xl shadow-2xl border border-slate-100 p-6 pointer-events-auto"
+              className="w-full max-w-[90vw] sm:max-w-sm bg-white rounded-2xl shadow-2xl border border-slate-100 p-6 pointer-events-auto"
             >
               <div className="flex flex-col items-center text-center">
                 <motion.div
@@ -210,7 +210,7 @@ export function DeleteConfirmationModal({
                   variants={buttonContainerVariants}
                   initial="hidden"
                   animate="visible"
-                  className="flex gap-3 w-full"
+                  className="flex flex-col-reverse sm:flex-row gap-3 w-full"
                 >
                   <motion.div variants={buttonVariants} className="flex-1">
                     <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
