@@ -66,24 +66,24 @@ function LoginForm() {
   // Show loading while checking auth
   if (checking) {
     return (
-      <div className="text-lg text-slate-500">Memuat...</div>
+      <div className="text-base sm:text-lg text-slate-500">Memuat...</div>
     );
   }
 
   return (
     <div className="w-full max-w-md space-y-12">
       <div className="text-center space-y-6">
-        <h1 className="text-5xl sm:text-6xl font-bold text-slate-900">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-slate-900">
           Admin Login
         </h1>
-        <p className="text-lg text-slate-500">
+        <p className="text-base sm:text-lg md:text-xl text-slate-500">
           Masukkan passcode untuk akses dashboard
         </p>
       </div>
 
       <form onSubmit={handleLogin} className="space-y-6">
         <div className="space-y-3">
-          <label className="block text-sm font-medium text-slate-700">
+          <label className="block text-xs sm:text-sm font-medium text-slate-700">
             Passcode
           </label>
           <Input
@@ -111,13 +111,13 @@ function LoginForm() {
 
 function LoadingFallback() {
   return (
-    <div className="text-lg text-slate-500">Memuat...</div>
+    <div className="text-base sm:text-lg text-slate-500">Memuat...</div>
   );
 }
 
 export default function AdminLoginPage() {
   return (
-    <main className="min-h-screen flex items-center justify-center px-6 py-20">
+    <main className="min-h-screen flex items-center justify-center px-4 sm:px-6 md:px-8 py-20">
       <Suspense fallback={<LoadingFallback />}>
         <LoginForm />
       </Suspense>

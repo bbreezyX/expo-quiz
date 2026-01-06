@@ -146,7 +146,7 @@ export function ImportQuestionModal({
     <AnimatePresence>
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-auto"
           style={{ perspective: 1200 }}
         >
           <motion.div
@@ -155,14 +155,14 @@ export function ImportQuestionModal({
             animate="visible"
             exit="exit"
             onClick={onClose}
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
           />
           <motion.div
             variants={modalVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl z-10 relative overflow-hidden"
+            className="bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl z-10 relative overflow-hidden my-auto"
           >
             <motion.div
               variants={headerVariants}

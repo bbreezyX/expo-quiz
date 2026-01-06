@@ -321,7 +321,7 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 sm:px-6 py-8">
+    <main className="min-h-screen bg-slate-50 px-4 sm:px-6 md:px-8 py-8">
       <div className="mx-auto max-w-7xl space-y-8">
         <AdminHeader 
           activeTab={activeTab} 
@@ -353,9 +353,9 @@ export default function AdminPage() {
                 filter: "blur(4px)",
                 transition: { duration: 0.25, ease: [0.32, 0, 0.67, 0] as const },
               }}
-              className="grid grid-cols-1 lg:grid-cols-2 gap-8"
+              className="grid grid-cols-1 md:grid-cols-2 gap-8"
             >
-              <div className="space-y-8 lg:pr-8">
+              <div className="space-y-8 md:pr-4 lg:pr-8">
                 <SessionControl
                   code={code}
                   endedAt={endedAt}
@@ -444,7 +444,7 @@ export default function AdminPage() {
                 />
               </div>
 
-              <div className="space-y-8 lg:pl-8">
+              <div className="space-y-8 md:pl-4 lg:pl-8">
                 <SessionQuestionList questions={questions} />
                 
                 <SessionHistoryList 
@@ -482,9 +482,9 @@ export default function AdminPage() {
                 filter: "blur(4px)",
                 transition: { duration: 0.25, ease: [0.32, 0, 0.67, 0] as const },
               }}
-              className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+              className="grid grid-cols-1 md:grid-cols-3 gap-8"
             >
-              <div className="lg:col-span-1 space-y-6">
+              <div className="md:col-span-1 space-y-6">
                 <div className="sticky top-8">
                   <QuestionForm
                     title="Input Soal Baru"
@@ -504,7 +504,7 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              <div className="lg:col-span-2">
+              <div className="md:col-span-2">
                 <BankQuestionList 
                   questions={bankQuestions} 
                   onDelete={handleDeleteBankQuestion} 

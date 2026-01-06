@@ -348,11 +348,11 @@ export default function QuizPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen px-6 py-20 flex justify-center items-center">
+      <div className="min-h-screen px-4 sm:px-6 md:px-8 py-20 flex justify-center items-center">
         <div className="w-full max-w-md text-center space-y-8">
           <div className="space-y-4">
             <h1 className="text-4xl sm:text-5xl font-bold text-slate-900">Loading...</h1>
-            <p className="text-lg text-slate-500">
+            <p className="text-base sm:text-lg text-slate-500">
               Quiz sedang disiapkan
             </p>
           </div>
@@ -363,11 +363,11 @@ export default function QuizPage() {
 
   if (!session) {
     return (
-      <div className="min-h-screen px-6 py-20 flex justify-center items-center">
+      <div className="min-h-screen px-4 sm:px-6 md:px-8 py-20 flex justify-center items-center">
         <div className="w-full max-w-md text-center space-y-8">
           <div className="space-y-4">
             <h1 className="text-4xl sm:text-5xl font-bold text-slate-900">Error</h1>
-            <p className="text-lg text-slate-500">Sesi tidak ketemu. Coba cek kodenya lagi ya.</p>
+            <p className="text-base sm:text-lg text-slate-500">Sesi tidak ketemu. Coba cek kodenya lagi ya.</p>
           </div>
           <Button size="lg" onClick={() => router.push("/join")} className="rounded-full">
             Kembali ke Join
@@ -379,11 +379,11 @@ export default function QuizPage() {
 
   if (!isValidSession && !participantId) {
     return (
-      <div className="min-h-screen px-6 py-20 flex justify-center items-center">
+      <div className="min-h-screen px-4 sm:px-6 md:px-8 py-20 flex justify-center items-center">
         <div className="w-full max-w-md text-center space-y-8">
           <div className="space-y-4">
             <h1 className="text-4xl sm:text-5xl font-bold text-slate-900">Belum Terdaftar</h1>
-            <p className="text-lg text-slate-500">
+            <p className="text-base sm:text-lg text-slate-500">
               Kamu belum join sesi ini. Silakan join dulu ya.
             </p>
           </div>
@@ -397,11 +397,11 @@ export default function QuizPage() {
 
   if (!q) {
     return (
-      <div className="min-h-screen px-6 py-20 flex justify-center items-center">
+      <div className="min-h-screen px-4 sm:px-6 md:px-8 py-20 flex justify-center items-center">
         <div className="w-full max-w-md text-center space-y-8">
           <div className="space-y-4">
             <h1 className="text-4xl sm:text-5xl font-bold text-slate-900">Tunggu Sebentar</h1>
-            <p className="text-lg text-slate-500">
+            <p className="text-base sm:text-lg text-slate-500">
               Quiz belum dimulai. Cek leaderboard dulu
             </p>
           </div>
@@ -422,7 +422,7 @@ export default function QuizPage() {
   const answerOptions = [...q.options, "Semua jawaban di atas benar"];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white px-4 pt-8 pb-28 sm:px-6 sm:pt-12 sm:pb-12">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white px-4 pt-8 pb-28 sm:px-6 md:px-8 sm:pt-12 sm:pb-12">
       <div className="mx-auto max-w-3xl space-y-8 sm:space-y-12">
         {/* Logo - Small */}
         <div className="flex justify-center">

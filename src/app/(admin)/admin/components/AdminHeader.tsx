@@ -76,8 +76,8 @@ export function AdminHeader({ activeTab, setActiveTab, onLogout }: AdminHeaderPr
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3, duration: 0.4, ease: [0.22, 1, 0.36, 1] as const }}
         >
-          <h1 className="text-xl font-bold text-slate-900">Selamat Datang</h1>
-          <p className="text-sm text-slate-500">Kelola kuis dan bank soal</p>
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900">Selamat Datang</h1>
+          <p className="text-xs sm:text-sm md:text-base text-slate-500">Kelola kuis dan bank soal</p>
         </motion.div>
       </motion.div>
       <motion.div variants={itemVariants} className="flex items-center gap-3">

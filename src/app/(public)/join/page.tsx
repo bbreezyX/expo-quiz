@@ -14,7 +14,7 @@ async function joinByCode(formData: FormData) {
 
 export default function JoinIndexPage() {
   return (
-    <main className="min-h-screen flex items-center justify-center px-6 py-20">
+    <main className="min-h-screen flex items-center justify-center px-4 sm:px-6 md:px-8 py-20">
       <div className="w-full max-w-md space-y-12">
         <div className="text-center space-y-6">
           {/* Logo */}

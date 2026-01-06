@@ -63,14 +63,14 @@ export default function JoinPage() {
   // Show loading while checking auth
   if (authLoading) {
     return (
-      <main className="min-h-screen flex items-center justify-center px-6 py-20">
-        <div className="text-lg text-slate-500">Memuat...</div>
+      <main className="min-h-screen flex items-center justify-center px-4 sm:px-6 md:px-8 py-20">
+        <div className="text-base sm:text-lg text-slate-500">Memuat...</div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-6 py-20">
+    <main className="min-h-screen flex items-center justify-center px-4 sm:px-6 md:px-8 py-20">
       <div className="w-full max-w-md space-y-12">
         <div className="text-center space-y-6">
           {/* Logo */}

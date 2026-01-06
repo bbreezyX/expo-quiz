@@ -18,20 +18,20 @@ function LeaderboardRowComponent({ row, index }: LeaderboardRowProps) {
 
   return (
     <div
-      className={`grid grid-cols-12 gap-4 rounded-2xl px-6 py-5 transition-colors ${
+      className={`grid grid-cols-12 gap-3 sm:gap-4 rounded-2xl px-4 sm:px-6 py-4 sm:py-5 transition-colors ${
         isTop3
           ? "bg-slate-900 text-white border border-slate-900"
           : "bg-white text-slate-700 border border-slate-100 hover:border-slate-200"
       }`}
     >
-      <div className={`col-span-1 font-semibold ${isTop3 ? "text-white" : "text-slate-900"}`}>
+      <div className={`col-span-2 sm:col-span-1 font-semibold text-sm sm:text-base ${isTop3 ? "text-white" : "text-slate-900"}`}>
         {index + 1}
       </div>
-      <div className={`col-span-7 ${isTop3 ? "font-semibold" : "font-medium"}`}>
+      <div className={`col-span-6 sm:col-span-7 text-sm sm:text-base ${isTop3 ? "font-semibold" : "font-medium"} truncate`}>
         {row.display_name}
       </div>
-      <div className="col-span-2 text-right font-semibold">{row.total_points}</div>
-      <div className={`col-span-2 text-right ${isTop3 ? "text-white/80" : "text-slate-500"}`}>
+      <div className="col-span-4 sm:col-span-2 text-right font-semibold text-sm sm:text-base">{row.total_points}</div>
+      <div className={`hidden sm:block col-span-2 text-right text-sm sm:text-base ${isTop3 ? "text-white/80" : "text-slate-500"}`}>
         {row.correct_count}
       </div>
     </div>
@@ -97,7 +97,7 @@ export default function ScreenPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white px-6 py-16 sm:py-20">
+    <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white px-4 sm:px-6 md:px-8 py-16 sm:py-20">
       <div className="max-w-4xl mx-auto space-y-12">
         {/* Logo */}
         <div className="flex justify-center">
@@ -139,22 +139,22 @@ export default function ScreenPage() {
           )}
         </div>
 
-        <div className="bg-white rounded-3xl border border-slate-100 p-8 sm:p-10">
-          <div className="grid grid-cols-12 gap-4 text-xs font-medium uppercase tracking-wider text-slate-500 border-b border-slate-200 pb-4 mb-6">
-            <div className="col-span-1">#</div>
-            <div className="col-span-7">Nama</div>
-            <div className="col-span-2 text-right">Poin</div>
-            <div className="col-span-2 text-right">Benar</div>
+        <div className="bg-white rounded-3xl border border-slate-100 p-4 sm:p-8 md:p-10">
+          <div className="grid grid-cols-12 gap-3 sm:gap-4 text-xs sm:text-sm font-medium uppercase tracking-wider text-slate-500 border-b border-slate-200 pb-3 sm:pb-4 mb-4 sm:mb-6">
+            <div className="col-span-2 sm:col-span-1">#</div>
+            <div className="col-span-6 sm:col-span-7">Nama</div>
+            <div className="col-span-4 sm:col-span-2 text-right">Poin</div>
+            <div className="hidden sm:block col-span-2 text-right">Benar</div>
           </div>
 
           <div className="space-y-3">
             {loading && (
-              <div className="bg-slate-50 rounded-2xl px-6 py-8 text-center text-sm text-slate-600">
+              <div className="bg-slate-50 rounded-2xl px-4 sm:px-6 py-6 sm:py-8 text-center text-xs sm:text-sm text-slate-600">
                 Memuat leaderboard...
               </div>
             )}
             {error && !loading && (
-              <div className="bg-slate-100 rounded-2xl px-6 py-8 text-center text-sm text-slate-600">
+              <div className="bg-slate-100 rounded-2xl px-4 sm:px-6 py-6 sm:py-8 text-center text-xs sm:text-sm text-slate-600">
                 {error}
               </div>
             )}
@@ -163,14 +163,14 @@ export default function ScreenPage() {
                 <LeaderboardRowComponent key={row.participant_id} row={row} index={index} />
               ))}
             {!loading && !error && rows.length === 0 && (
-              <div className="bg-slate-50 rounded-2xl px-6 py-12 text-center text-sm text-slate-500 border border-dashed border-slate-200">
+              <div className="bg-slate-50 rounded-2xl px-4 sm:px-6 py-8 sm:py-12 text-center text-xs sm:text-sm text-slate-500 border border-dashed border-slate-200">
                 Belum ada jawaban masuk
               </div>
             )}
           </div>
         </div>
 
-        <div className="bg-slate-50 rounded-2xl px-6 py-4 border border-slate-100 text-center text-sm text-slate-600">
+        <div className="bg-slate-50 rounded-2xl px-4 sm:px-6 py-3 sm:py-4 border border-slate-100 text-center text-xs sm:text-sm text-slate-600">
           Tampilkan halaman ini di layar besar untuk update real-time
         </div>
       </div>
