@@ -65,11 +65,10 @@ const cardVariants: Variants = {
 };
 
 const deleteButtonVariants: Variants = {
-  hidden: { opacity: 0, scale: 0.8, rotate: -10 },
+  hidden: { opacity: 0, scale: 0.8 },
   visible: {
     opacity: 1,
     scale: 1,
-    rotate: 0,
     transition: {
       type: "spring",
       stiffness: 500,
@@ -80,7 +79,8 @@ const deleteButtonVariants: Variants = {
     scale: 1.15,
     rotate: 5,
     backgroundColor: "#fef2f2",
-    transition: { duration: 0.15 },
+    color: "#ef4444",
+    transition: { duration: 0.1 },
   },
   tap: { scale: 0.9 },
 };
@@ -171,11 +171,11 @@ export function BankQuestionList({ questions, onDelete, onRefresh }: BankQuestio
                   <motion.button
                     variants={deleteButtonVariants}
                     initial="hidden"
+                    animate="visible"
                     whileHover="hover"
                     whileTap="tap"
-                    animate={undefined}
                     onClick={() => onDelete(q.id)}
-                    className="text-slate-300 hover:text-red-500 p-1.5 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                    className="text-slate-300 hover:text-red-500 p-1.5 rounded-lg transition-colors"
                     title="Hapus Soal"
                   >
                     <svg
