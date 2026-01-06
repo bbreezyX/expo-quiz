@@ -333,10 +333,26 @@ export default function AdminPage() {
           {activeTab === "session" ? (
             <motion.div
               key="session"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              transition={{ duration: 0.3 }}
+              initial={{ opacity: 0, x: -40, scale: 0.98, filter: "blur(4px)" }}
+              animate={{
+                opacity: 1,
+                x: 0,
+                scale: 1,
+                filter: "blur(0px)",
+                transition: {
+                  type: "spring",
+                  stiffness: 350,
+                  damping: 30,
+                  staggerChildren: 0.08,
+                },
+              }}
+              exit={{
+                opacity: 0,
+                x: 40,
+                scale: 0.98,
+                filter: "blur(4px)",
+                transition: { duration: 0.25, ease: [0.32, 0, 0.67, 0] },
+              }}
               className="grid grid-cols-1 lg:grid-cols-2 gap-8"
             >
               <div className="space-y-8 lg:pr-8">
@@ -446,10 +462,26 @@ export default function AdminPage() {
           ) : (
             <motion.div
               key="bank"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
+              initial={{ opacity: 0, x: 40, scale: 0.98, filter: "blur(4px)" }}
+              animate={{
+                opacity: 1,
+                x: 0,
+                scale: 1,
+                filter: "blur(0px)",
+                transition: {
+                  type: "spring",
+                  stiffness: 350,
+                  damping: 30,
+                  staggerChildren: 0.08,
+                },
+              }}
+              exit={{
+                opacity: 0,
+                x: -40,
+                scale: 0.98,
+                filter: "blur(4px)",
+                transition: { duration: 0.25, ease: [0.32, 0, 0.67, 0] },
+              }}
               className="grid grid-cols-1 lg:grid-cols-3 gap-8"
             >
               <div className="lg:col-span-1 space-y-6">

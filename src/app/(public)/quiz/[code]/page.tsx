@@ -23,31 +23,106 @@ type OptionCardProps = {
   onPick: () => void;
 };
 
+// Animation variants for option cards
+const optionCardVariants = {
+  hidden: { opacity: 0, x: -20, scale: 0.95 },
+  visible: (i: number) => ({
+    opacity: 1,
+    x: 0,
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 350,
+      damping: 25,
+      delay: i * 0.08,
+    },
+  }),
+  exit: {
+    opacity: 0,
+    x: -20,
+    scale: 0.95,
+    transition: { duration: 0.2 },
+  },
+};
+
 function OptionCard({ label, index, picked, disabled, onPick }: OptionCardProps) {
   const letter = String.fromCharCode(65 + index);
   return (
-    <button
+    <motion.button
+      custom={index}
+      variants={optionCardVariants}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
       onClick={onPick}
       disabled={disabled}
-      className={`w-full text-left rounded-2xl border px-6 py-5 transition-all ${
-        picked
-          ? "border-slate-900 bg-slate-900 text-white shadow-lg"
-          : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"
+      whileHover={
+        !disabled
+          ? {
+              scale: 1.02,
+              boxShadow: picked
+                ? "0 20px 40px -12px rgba(15, 23, 42, 0.35)"
+                : "0 10px 30px -12px rgba(100, 116, 139, 0.15)",
+              transition: { duration: 0.2 },
+            }
+          : {}
+      }
+      whileTap={!disabled ? { scale: 0.98 } : {}}
+      animate={{
+        backgroundColor: picked ? "#0f172a" : "#ffffff",
+        borderColor: picked ? "#0f172a" : "#e2e8f0",
+        color: picked ? "#ffffff" : "#0f172a",
+      }}
+      transition={{
+        backgroundColor: { duration: 0.25, ease: [0.22, 1, 0.36, 1] },
+        borderColor: { duration: 0.25, ease: [0.22, 1, 0.36, 1] },
+      }}
+      className={`w-full text-left rounded-2xl border px-6 py-5 ${
+        picked ? "shadow-lg" : ""
       } ${disabled ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`}
     >
       <div className="flex items-center gap-4">
-        <div
-          className={`flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
-            picked ? "bg-white text-slate-900" : "bg-slate-100 text-slate-700"
-          }`}
+        <motion.div
+          animate={{
+            backgroundColor: picked ? "#ffffff" : "#f1f5f9",
+            color: picked ? "#0f172a" : "#334155",
+            scale: picked ? 1.1 : 1,
+          }}
+          transition={{ duration: 0.25, type: "spring", stiffness: 400 }}
+          className="flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
         >
           {letter}
-        </div>
-        <span className={`flex-1 text-base sm:text-lg font-medium leading-relaxed`}>
+        </motion.div>
+        <span className="flex-1 text-base sm:text-lg font-medium leading-relaxed">
           {label}
         </span>
+        <AnimatePresence>
+          {picked && (
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              exit={{ scale: 0, rotate: 180 }}
+              transition={{ type: "spring", stiffness: 500, damping: 25 }}
+              className="w-6 h-6 rounded-full bg-white flex items-center justify-center"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#0f172a"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-    </button>
+    </motion.button>
   );
 }
 
@@ -59,17 +134,56 @@ type ProgressItemProps = {
 
 function ProgressItem({ index, active, done }: ProgressItemProps) {
   return (
-    <div
-      className={`rounded-xl border px-4 py-3 transition-colors ${
-        active ? "border-slate-900 bg-slate-900" : done ? "border-slate-200 bg-slate-100" : "border-slate-200 bg-white"
-      }`}
+    <motion.div
+      initial={{ opacity: 0, scale: 0.8, y: 10 }}
+      animate={{
+        opacity: 1,
+        scale: 1,
+        y: 0,
+        backgroundColor: active ? "#0f172a" : done ? "#f1f5f9" : "#ffffff",
+        borderColor: active ? "#0f172a" : "#e2e8f0",
+      }}
+      transition={{
+        delay: index * 0.03,
+        type: "spring",
+        stiffness: 400,
+        damping: 25,
+      }}
+      whileHover={{ scale: 1.05, transition: { duration: 0.15 } }}
+      className="rounded-xl border px-4 py-3"
     >
       <div className="flex items-center gap-3">
-        <div className={`text-xs font-medium ${active ? "text-white" : done ? "text-slate-600" : "text-slate-400"}`}>
+        <motion.div
+          animate={{
+            color: active ? "#ffffff" : done ? "#475569" : "#94a3b8",
+          }}
+          className="text-xs font-medium"
+        >
           Soal {index + 1}
-        </div>
+        </motion.div>
+        {done && !active && (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 500 }}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#22c55e"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </motion.div>
+        )}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -355,11 +469,17 @@ export default function QuizPage() {
         <AnimatePresence mode="wait">
           <motion.div
             key={q.id}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
-            transition={{ duration: 0.2 }}
-            className="bg-white rounded-3xl border border-slate-100 p-8 sm:p-12 space-y-10"
+            initial={{ opacity: 0, y: 30, scale: 0.97, rotateX: 5 }}
+            animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
+            exit={{ opacity: 0, y: -30, scale: 0.97, rotateX: -5 }}
+            transition={{
+              type: "spring",
+              stiffness: 350,
+              damping: 30,
+              mass: 0.8,
+            }}
+            style={{ perspective: 1200 }}
+            className="bg-white rounded-3xl border border-slate-100 p-8 sm:p-12 space-y-10 shadow-sm"
           >
             <div className="space-y-6">
               <div className="space-y-3">
@@ -398,35 +518,90 @@ export default function QuizPage() {
 
             <motion.div
               aria-hidden={isMobile && hideBar}
-              animate={{ y: isMobile && hideBar ? 96 : 0, opacity: isMobile && hideBar ? 0 : 1 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
+              initial={{ y: 50, opacity: 0 }}
+              animate={{
+                y: isMobile && hideBar ? 96 : 0,
+                opacity: isMobile && hideBar ? 0 : 1,
+              }}
+              transition={{
+                type: "spring",
+                stiffness: 400,
+                damping: 30,
+              }}
               style={{ pointerEvents: isMobile && hideBar ? "none" : "auto" }}
               className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-100 bg-white/95 px-4 py-4 backdrop-blur sm:static sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-0"
             >
               <div className="mx-auto flex max-w-3xl flex-col gap-3 sm:flex-row sm:pt-6">
-                <Button
-                  variant="outline"
-                  onClick={() => idx > 0 && setIdx(idx - 1)}
-                  disabled={idx === 0 || submitting}
-                  className="order-2 sm:order-1 w-full sm:w-auto rounded-full h-12 text-slate-600"
+                <motion.div
+                  whileHover={{ scale: idx > 0 && !submitting ? 1.02 : 1 }}
+                  whileTap={{ scale: idx > 0 && !submitting ? 0.98 : 1 }}
+                  className="order-2 sm:order-1 w-full sm:w-auto"
                 >
-                  Kembali
-                </Button>
-                <Button
-                  size="lg"
-                  className="order-1 sm:order-2 w-full sm:flex-1 rounded-full h-14 text-base shadow-lg shadow-slate-900/10"
-                  onClick={submit}
-                  disabled={picked === null || !canAnswer || submitting}
+                  <Button
+                    variant="outline"
+                    onClick={() => idx > 0 && setIdx(idx - 1)}
+                    disabled={idx === 0 || submitting}
+                    className="w-full rounded-full h-12 text-slate-600"
+                  >
+                    Kembali
+                  </Button>
+                </motion.div>
+                <motion.div
+                  whileHover={{
+                    scale: picked !== null && canAnswer && !submitting ? 1.02 : 1,
+                    boxShadow:
+                      picked !== null && canAnswer && !submitting
+                        ? "0 20px 40px -12px rgba(15, 23, 42, 0.25)"
+                        : "0 10px 15px -3px rgba(15, 23, 42, 0.1)",
+                  }}
+                  whileTap={{ scale: picked !== null && canAnswer && !submitting ? 0.98 : 1 }}
+                  animate={
+                    submitting
+                      ? { scale: [1, 1.02, 1] }
+                      : {}
+                  }
+                  transition={
+                    submitting
+                      ? { duration: 1.2, repeat: Infinity, ease: "easeInOut" }
+                      : { type: "spring", stiffness: 400, damping: 25 }
+                  }
+                  className="order-1 sm:order-2 w-full sm:flex-1"
                 >
-                  {submitting ? (
-                    <span className="inline-flex items-center justify-center gap-2">
-                      <span className="size-4 animate-spin rounded-full border-2 border-white/50 border-t-white" />
-                      Mengirim...
-                    </span>
-                  ) : (
-                    "Kirim Jawaban"
-                  )}
-                </Button>
+                  <Button
+                    size="lg"
+                    className="w-full rounded-full h-14 text-base shadow-lg shadow-slate-900/10"
+                    onClick={submit}
+                    disabled={picked === null || !canAnswer || submitting}
+                  >
+                    <AnimatePresence mode="wait">
+                      {submitting ? (
+                        <motion.span
+                          key="loading"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="inline-flex items-center justify-center gap-2"
+                        >
+                          <motion.span
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            className="size-4 rounded-full border-2 border-white/50 border-t-white"
+                          />
+                          Mengirim...
+                        </motion.span>
+                      ) : (
+                        <motion.span
+                          key="text"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                        >
+                          Kirim Jawaban
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                  </Button>
+                </motion.div>
               </div>
             </motion.div>
           </motion.div>

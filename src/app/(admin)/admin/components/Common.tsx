@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 
 export function Section({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <div className={`bg-white rounded-3xl border border-slate-100 p-6 sm:p-8 ${className}`}>
+    <div className={`bg-white rounded-3xl border border-slate-100 p-6 sm:p-8 overflow-hidden ${className}`}>
       {children}
     </div>
   );
