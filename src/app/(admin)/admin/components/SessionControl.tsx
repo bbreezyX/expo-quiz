@@ -188,7 +188,7 @@ export function SessionControl({
           </div>
         ) : (
           <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xl shadow-slate-200/50">
-            <div className="flex flex-col sm:flex-row gap-8">
+            <div className="flex flex-col lg:flex-row gap-8">
               <div className="flex-1 space-y-6">
                 <div className="space-y-1">
                   <label className="text-[10px] uppercase tracking-wider font-bold text-slate-400">
@@ -325,19 +325,16 @@ export function SessionControl({
             <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-full border border-slate-100">
                 <span
-                  className={`relative flex h-3 w-3 ${
-                    endedAt ? "" : "animate-pulse"
-                  }`}
+                  className={`relative flex h-3 w-3 ${endedAt ? "" : "animate-pulse"
+                    }`}
                 >
                   <span
-                    className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                      endedAt ? "hidden" : "bg-green-400"
-                    }`}
+                    className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${endedAt ? "hidden" : "bg-green-400"
+                      }`}
                   ></span>
                   <span
-                    className={`relative inline-flex rounded-full h-3 w-3 ${
-                      endedAt ? "bg-red-500" : "bg-green-500"
-                    }`}
+                    className={`relative inline-flex rounded-full h-3 w-3 ${endedAt ? "bg-red-500" : "bg-green-500"
+                      }`}
                   ></span>
                 </span>
                 <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
