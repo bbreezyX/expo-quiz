@@ -155,6 +155,7 @@ export function useLeaderboard(sessionId: string | null, options?: SWRConfigurat
     {
       revalidateOnFocus: false,
       dedupingInterval: 2000, // Refresh leaderboard every 2 seconds max
+      refreshInterval: 2000, // Auto-refresh setiap 2 detik
       ...options,
     }
   );

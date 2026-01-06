@@ -3,8 +3,6 @@
 import { useEffect } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 import Image from "next/image";
 import { useSession, useLeaderboard, type LeaderboardRow } from "@/lib/hooks";
 
@@ -49,7 +47,7 @@ export default function ScreenPage() {
     rows, 
     isLoading: leaderboardLoading, 
     error: leaderboardError,
-    refresh: refreshLeaderboard 
+    refresh
   } = useLeaderboard(session?.id || null);
 
   const loading = sessionLoading || leaderboardLoading;
@@ -71,7 +69,7 @@ export default function ScreenPage() {
         },
         () => {
           // Debounce refresh to avoid spam
-          setTimeout(() => refreshLeaderboard(), 250);
+          setTimeout(() => refresh(), 250);
         }
       )
       .subscribe();
@@ -79,22 +77,7 @@ export default function ScreenPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [session?.id, refreshLeaderboard]);
-
-  function handleRefresh() {
-    toast.loading("Memuat leaderboard...", { id: "fetch-leaderboard" });
-    refreshLeaderboard().then(() => {
-      toast.success("Leaderboard dimuat!", {
-        id: "fetch-leaderboard",
-        description: `${rows.length} peserta`,
-      });
-    }).catch(() => {
-      toast.error("Gagal memuat", {
-        id: "fetch-leaderboard",
-        description: "Coba lagi nanti",
-      });
-    });
-  }
+  }, [session?.id, refresh]);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white px-4 sm:px-6 md:px-8 py-16 sm:py-20">
@@ -112,31 +95,20 @@ export default function ScreenPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-6">
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900">
-                Leaderboard
-              </h1>
-              <span className={`inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium ${
-                session?.ended_at ? "bg-slate-200 text-slate-600" : "bg-slate-900 text-white"
-              }`}>
-                {session?.ended_at ? "Selesai" : "Live"}
-              </span>
-            </div>
-            <p className="text-base sm:text-lg text-slate-500">
-              Sesi: <span className="font-mono font-semibold text-slate-900">{code}</span>
-            </p>
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900">
+              Leaderboard
+            </h1>
+            <span className={`inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium ${
+              session?.ended_at ? "bg-slate-200 text-slate-600" : "bg-slate-900 text-white"
+            }`}>
+              {session?.ended_at ? "Selesai" : "Live"}
+            </span>
           </div>
-          {session && (
-            <Button
-              variant="outline"
-              onClick={handleRefresh}
-              className="rounded-full"
-            >
-              Refresh
-            </Button>
-          )}
+          <p className="text-base sm:text-lg text-slate-500">
+            Sesi: <span className="font-mono font-semibold text-slate-900">{code}</span>
+          </p>
         </div>
 
         <div className="bg-white rounded-3xl border border-slate-100 p-4 sm:p-8 md:p-10">
