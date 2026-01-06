@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Section, SectionHeader } from "./Common";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 
 type QuestionFormProps = {
   title: string;
@@ -27,7 +27,7 @@ type QuestionFormProps = {
 };
 
 // Animation variants
-const formVariants = {
+const formVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -42,7 +42,7 @@ const formVariants = {
   },
 };
 
-const fieldVariants = {
+const fieldVariants: Variants = {
   hidden: { opacity: 0, y: 20, scale: 0.98 },
   visible: {
     opacity: 1,
@@ -56,7 +56,7 @@ const fieldVariants = {
   },
 };
 
-const optionVariants = {
+const optionVariants: Variants = {
   hidden: { opacity: 0, x: -20 },
   visible: (i: number) => ({
     opacity: 1,
@@ -70,7 +70,7 @@ const optionVariants = {
   }),
 };
 
-const buttonVariants = {
+const buttonVariants: Variants = {
   idle: { scale: 1 },
   hover: {
     scale: 1.02,
@@ -95,7 +95,7 @@ const buttonVariants = {
   },
 };
 
-const disabledContentVariants = {
+const disabledContentVariants: Variants = {
   hidden: { opacity: 0, scale: 0.95, y: 10 },
   visible: {
     opacity: 1,

@@ -1,7 +1,7 @@
 "use client";
 
 import { Section, SectionHeader } from "./Common";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 
 export type Question = {
   id: string;
@@ -17,7 +17,7 @@ type SessionQuestionListProps = {
 };
 
 // Animation variants
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -28,7 +28,7 @@ const containerVariants = {
   },
 };
 
-const cardVariants = {
+const cardVariants: Variants = {
   hidden: {
     opacity: 0,
     y: 40,
@@ -64,7 +64,7 @@ const cardVariants = {
   },
 };
 
-const emptyVariants = {
+const emptyVariants: Variants = {
   hidden: { opacity: 0, scale: 0.9, y: 20 },
   visible: {
     opacity: 1,
@@ -83,7 +83,7 @@ const emptyVariants = {
   },
 };
 
-const iconPulse = {
+const iconPulse: Variants = {
   hidden: { scale: 0, opacity: 0 },
   visible: {
     scale: 1,
@@ -97,7 +97,7 @@ const iconPulse = {
   },
 };
 
-const optionVariants = {
+const optionVariants: Variants = {
   hidden: { opacity: 0, x: -10 },
   visible: (i: number) => ({
     opacity: 1,

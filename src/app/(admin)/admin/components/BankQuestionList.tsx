@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Section, SectionHeader } from "./Common";
 import { Question } from "./SessionQuestionList";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 
 type BankQuestionListProps = {
   questions: Question[];
@@ -12,7 +12,7 @@ type BankQuestionListProps = {
 };
 
 // Animation variants
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -23,7 +23,7 @@ const containerVariants = {
   },
 };
 
-const cardVariants = {
+const cardVariants: Variants = {
   hidden: {
     opacity: 0,
     scale: 0.85,
@@ -64,7 +64,7 @@ const cardVariants = {
   },
 };
 
-const deleteButtonVariants = {
+const deleteButtonVariants: Variants = {
   hidden: { opacity: 0, scale: 0.8, rotate: -10 },
   visible: {
     opacity: 1,
@@ -85,7 +85,7 @@ const deleteButtonVariants = {
   tap: { scale: 0.9 },
 };
 
-const optionVariants = {
+const optionVariants: Variants = {
   hidden: { opacity: 0, x: -15 },
   visible: (i: number) => ({
     opacity: 1,
@@ -99,7 +99,7 @@ const optionVariants = {
   }),
 };
 
-const emptyVariants = {
+const emptyVariants: Variants = {
   hidden: { opacity: 0, scale: 0.9 },
   visible: {
     opacity: 1,

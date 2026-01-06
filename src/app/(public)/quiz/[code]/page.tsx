@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, Variants } from "framer-motion";
 import Image from "next/image";
 import { 
   useParticipantSession, 
@@ -24,7 +24,7 @@ type OptionCardProps = {
 };
 
 // Animation variants for option cards
-const optionCardVariants = {
+const optionCardVariants: Variants = {
   hidden: { opacity: 0, x: -20, scale: 0.95 },
   visible: (i: number) => ({
     opacity: 1,
@@ -43,6 +43,18 @@ const optionCardVariants = {
     scale: 0.95,
     transition: { duration: 0.2 },
   },
+  picked: {
+    backgroundColor: "#0f172a",
+    borderColor: "#0f172a",
+    color: "#ffffff",
+    transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1] },
+  },
+  unpicked: {
+    backgroundColor: "#ffffff",
+    borderColor: "#e2e8f0",
+    color: "#0f172a",
+    transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1] },
+  },
 };
 
 function OptionCard({ label, index, picked, disabled, onPick }: OptionCardProps) {
@@ -52,7 +64,7 @@ function OptionCard({ label, index, picked, disabled, onPick }: OptionCardProps)
       custom={index}
       variants={optionCardVariants}
       initial="hidden"
-      animate="visible"
+      animate={["visible", picked ? "picked" : "unpicked"]}
       exit="exit"
       onClick={onPick}
       disabled={disabled}
@@ -68,15 +80,6 @@ function OptionCard({ label, index, picked, disabled, onPick }: OptionCardProps)
           : {}
       }
       whileTap={!disabled ? { scale: 0.98 } : {}}
-      animate={{
-        backgroundColor: picked ? "#0f172a" : "#ffffff",
-        borderColor: picked ? "#0f172a" : "#e2e8f0",
-        color: picked ? "#ffffff" : "#0f172a",
-      }}
-      transition={{
-        backgroundColor: { duration: 0.25, ease: [0.22, 1, 0.36, 1] },
-        borderColor: { duration: 0.25, ease: [0.22, 1, 0.36, 1] },
-      }}
       className={`w-full text-left rounded-2xl border px-6 py-5 ${
         picked ? "shadow-lg" : ""
       } ${disabled ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`}

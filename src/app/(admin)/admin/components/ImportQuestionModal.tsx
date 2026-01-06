@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Question } from "./SessionQuestionList";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 
 type ImportQuestionModalProps = {
   isOpen: boolean;
@@ -15,7 +15,7 @@ type ImportQuestionModalProps = {
 };
 
 // Animation variants
-const backdropVariants = {
+const backdropVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -27,7 +27,7 @@ const backdropVariants = {
   },
 };
 
-const modalVariants = {
+const modalVariants: Variants = {
   hidden: {
     opacity: 0,
     scale: 0.85,
@@ -57,7 +57,7 @@ const modalVariants = {
   },
 };
 
-const headerVariants = {
+const headerVariants: Variants = {
   hidden: { opacity: 0, y: -20 },
   visible: {
     opacity: 1,
@@ -66,7 +66,7 @@ const headerVariants = {
   },
 };
 
-const gridContainerVariants = {
+const gridContainerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -77,7 +77,7 @@ const gridContainerVariants = {
   },
 };
 
-const cardVariants = {
+const cardVariants: Variants = {
   hidden: { opacity: 0, scale: 0.9, y: 20 },
   visible: {
     opacity: 1,
@@ -91,7 +91,7 @@ const cardVariants = {
   },
 };
 
-const footerVariants = {
+const footerVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
@@ -100,7 +100,7 @@ const footerVariants = {
   },
 };
 
-const checkmarkVariants = {
+const checkmarkVariants: Variants = {
   hidden: { scale: 0, rotate: -45, opacity: 0 },
   visible: {
     scale: 1,

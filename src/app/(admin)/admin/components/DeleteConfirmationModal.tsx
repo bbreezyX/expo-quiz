@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
 type DeleteConfirmationModalProps = {
@@ -11,7 +11,7 @@ type DeleteConfirmationModalProps = {
 };
 
 // Animation variants
-const backdropVariants = {
+const backdropVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -23,7 +23,7 @@ const backdropVariants = {
   },
 };
 
-const modalVariants = {
+const modalVariants: Variants = {
   hidden: {
     opacity: 0,
     scale: 0.8,
@@ -53,7 +53,7 @@ const modalVariants = {
   },
 };
 
-const iconVariants = {
+const iconVariants: Variants = {
   hidden: { scale: 0, rotate: -180 },
   visible: {
     scale: 1,
@@ -67,7 +67,7 @@ const iconVariants = {
   },
 };
 
-const contentVariants = {
+const contentVariants: Variants = {
   hidden: { opacity: 0, y: 10 },
   visible: (delay: number) => ({
     opacity: 1,
@@ -80,7 +80,7 @@ const contentVariants = {
   }),
 };
 
-const buttonContainerVariants = {
+const buttonContainerVariants: Variants = {
   hidden: { opacity: 0, y: 10 },
   visible: {
     opacity: 1,
@@ -92,7 +92,7 @@ const buttonContainerVariants = {
   },
 };
 
-const buttonVariants = {
+const buttonVariants: Variants = {
   hidden: { opacity: 0, scale: 0.9 },
   visible: {
     opacity: 1,

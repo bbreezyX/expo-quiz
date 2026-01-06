@@ -1,7 +1,7 @@
 "use client";
 
 import { Section, SectionHeader } from "./Common";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 
 export type SessionSummary = {
   id: string;
@@ -19,7 +19,7 @@ type SessionHistoryListProps = {
 };
 
 // Animation variants
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -34,7 +34,7 @@ const containerVariants = {
   },
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, x: -30, scale: 0.95 },
   visible: {
     opacity: 1,
@@ -54,7 +54,7 @@ const itemVariants = {
   },
 };
 
-const emptyVariants = {
+const emptyVariants: Variants = {
   hidden: { opacity: 0, scale: 0.9, y: 10 },
   visible: {
     opacity: 1,
