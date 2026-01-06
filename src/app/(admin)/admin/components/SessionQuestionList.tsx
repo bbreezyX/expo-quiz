@@ -53,14 +53,14 @@ const cardVariants: Variants = {
     y: -20,
     transition: {
       duration: 0.25,
-      ease: [0.32, 0, 0.67, 0],
+      ease: [0.32, 0, 0.67, 0] as const,
     },
   },
   hover: {
     y: -4,
     boxShadow: "0 20px 40px -12px rgba(100, 116, 139, 0.2)",
     borderColor: "#a5b4fc",
-    transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] as const },
   },
 };
 
@@ -105,7 +105,7 @@ const optionVariants: Variants = {
     transition: {
       delay: i * 0.05,
       duration: 0.3,
-      ease: [0.22, 1, 0.36, 1],
+      ease: [0.22, 1, 0.36, 1] as const,
     },
   }),
 };

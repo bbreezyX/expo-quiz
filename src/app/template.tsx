@@ -1,9 +1,9 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 
 // Page transition variants
-const pageVariants = {
+const pageVariants: Variants = {
   initial: {
     opacity: 0,
     y: 24,
@@ -17,7 +17,7 @@ const pageVariants = {
     filter: "blur(0px)",
     transition: {
       duration: 0.5,
-      ease: [0.22, 1, 0.36, 1], // Custom easeOutExpo
+      ease: [0.22, 1, 0.36, 1] as const, // Custom easeOutExpo
       staggerChildren: 0.1,
     },
   },
@@ -28,7 +28,7 @@ const pageVariants = {
     filter: "blur(2px)",
     transition: {
       duration: 0.3,
-      ease: [0.32, 0, 0.67, 0], // Custom easeIn
+      ease: [0.32, 0, 0.67, 0] as const, // Custom easeIn
     },
   },
 };

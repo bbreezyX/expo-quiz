@@ -120,8 +120,8 @@ export function SessionHistoryList({ sessions, currentSessionId, onSelectSession
                   }}
                   transition={{
                     layout: { type: "spring", stiffness: 400, damping: 30 },
-                    backgroundColor: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
-                    borderColor: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
+                    backgroundColor: { duration: 0.3, ease: [0.22, 1, 0.36, 1] as const },
+                    borderColor: { duration: 0.3, ease: [0.22, 1, 0.36, 1] as const },
                   }}
                   className={`group flex items-center justify-between p-4 rounded-2xl border cursor-pointer ${
                     isActive ? "shadow-lg shadow-slate-300" : "hover:border-slate-300"

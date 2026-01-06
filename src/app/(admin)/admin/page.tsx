@@ -351,7 +351,7 @@ export default function AdminPage() {
                 x: 40,
                 scale: 0.98,
                 filter: "blur(4px)",
-                transition: { duration: 0.25, ease: [0.32, 0, 0.67, 0] },
+                transition: { duration: 0.25, ease: [0.32, 0, 0.67, 0] as const },
               }}
               className="grid grid-cols-1 lg:grid-cols-2 gap-8"
             >
@@ -480,7 +480,7 @@ export default function AdminPage() {
                 x: -40,
                 scale: 0.98,
                 filter: "blur(4px)",
-                transition: { duration: 0.25, ease: [0.32, 0, 0.67, 0] },
+                transition: { duration: 0.25, ease: [0.32, 0, 0.67, 0] as const },
               }}
               className="grid grid-cols-1 lg:grid-cols-3 gap-8"
             >
