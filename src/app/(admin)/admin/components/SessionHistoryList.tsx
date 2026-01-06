@@ -36,16 +36,20 @@ const containerVariants: Variants = {
 
 const itemVariants: Variants = {
   hidden: { opacity: 0, x: -30, scale: 0.95 },
-  visible: {
+  visible: (isActive: boolean) => ({
     opacity: 1,
     x: 0,
     scale: 1,
+    backgroundColor: isActive ? "#0f172a" : "#ffffff",
+    borderColor: isActive ? "#0f172a" : "#f1f5f9",
     transition: {
       type: "spring",
       stiffness: 350,
       damping: 25,
+      backgroundColor: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
+      borderColor: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
     },
-  },
+  }),
   exit: {
     opacity: 0,
     x: -30,
@@ -104,6 +108,7 @@ export function SessionHistoryList({ sessions, currentSessionId, onSelectSession
                   layout
                   layoutId={`session-${s.id}`}
                   key={s.id}
+                  custom={isActive}
                   variants={itemVariants}
                   onClick={() => onSelectSession(s)}
                   whileHover={{
@@ -114,15 +119,6 @@ export function SessionHistoryList({ sessions, currentSessionId, onSelectSession
                     transition: { duration: 0.2 },
                   }}
                   whileTap={{ scale: 0.98, transition: { duration: 0.1 } }}
-                  animate={{
-                    backgroundColor: isActive ? "#0f172a" : "#ffffff",
-                    borderColor: isActive ? "#0f172a" : "#f1f5f9",
-                  }}
-                  transition={{
-                    layout: { type: "spring", stiffness: 400, damping: 30 },
-                    backgroundColor: { duration: 0.3, ease: [0.22, 1, 0.36, 1] as const },
-                    borderColor: { duration: 0.3, ease: [0.22, 1, 0.36, 1] as const },
-                  }}
                   className={`group flex items-center justify-between p-4 rounded-2xl border cursor-pointer ${
                     isActive ? "shadow-lg shadow-slate-300" : "hover:border-slate-300"
                   }`}
