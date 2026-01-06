@@ -3,15 +3,15 @@ import { verifyAdminRequest } from "@/lib/auth";
 
 // Routes that require admin authentication
 const PROTECTED_PAGES = ["/admin"];
-const PROTECTED_API_ROUTES = [
-  "/api/session/create",
-  "/api/session/end",
-  "/api/session/list",
-  "/api/question/create",
-  "/api/question/import",
-  "/api/bank/create",
-  "/api/bank/delete",
-  "/api/bank/list",
+
+// Public API routes (Allowlist)
+const PUBLIC_API_ROUTES = [
+  "/api/participant/join",
+  "/api/participant/verify",
+  "/api/answer/submit",
+  "/api/admin/login",
+  "/api/admin/logout",
+  "/api/admin/verify",
 ];
 
 // Routes that should redirect to admin if already authenticated
@@ -24,12 +24,13 @@ export async function middleware(request: NextRequest) {
   const isProtectedPage = PROTECTED_PAGES.some(
     (route) => pathname === route || (pathname.startsWith(route) && !pathname.startsWith("/admin/login"))
   );
-  
-  // Check if it's a protected API route
-  const isProtectedApi = PROTECTED_API_ROUTES.some(
-    (route) => pathname.startsWith(route)
-  );
-  
+
+  // Check if it's an API route that requires protection
+  // Logic: Block ALL /api routes by default, except those in PUBLIC_API_ROUTES
+  const isApiRoute = pathname.startsWith("/api");
+  const isPublicApi = PUBLIC_API_ROUTES.some(route => pathname.startsWith(route));
+  const isProtectedApi = isApiRoute && !isPublicApi;
+
   // Check if it's an auth page (login)
   const isAuthPage = AUTH_PAGES.some((route) => pathname.startsWith(route));
 
@@ -61,15 +62,10 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Protected pages
+    // Match all admin pages
     "/admin/:path*",
-    // Protected API routes
-    "/api/session/create",
-    "/api/session/end",
-    "/api/session/list",
-    "/api/question/create",
-    "/api/question/import",
-    "/api/bank/:path*",
+    // Match all API routes to run middleware logic
+    "/api/:path*",
   ],
 };
 

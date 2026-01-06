@@ -2,6 +2,7 @@ import { SignJWT, jwtVerify, type JWTPayload } from "jose";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
+
 // Constants
 const AUTH_COOKIE_NAME = "admin_token";
 const PARTICIPANT_COOKIE_NAME = "participant_session";
@@ -28,13 +29,13 @@ export interface AdminTokenPayload extends JWTPayload {
  */
 export async function generateAdminToken(): Promise<string> {
   const secret = getSecretKey();
-  
+
   const token = await new SignJWT({ role: "admin" })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(TOKEN_EXPIRY)
     .sign(secret);
-  
+
   return token;
 }
 
@@ -56,7 +57,7 @@ export async function verifyToken(token: string): Promise<AdminTokenPayload | nu
  */
 export async function setAuthCookie(token: string): Promise<void> {
   const cookieStore = await cookies();
-  
+
   cookieStore.set(AUTH_COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -88,7 +89,7 @@ export async function getAuthToken(): Promise<string | null> {
 export async function isAdminAuthenticated(): Promise<boolean> {
   const token = await getAuthToken();
   if (!token) return false;
-  
+
   const payload = await verifyToken(token);
   return payload?.role === "admin";
 }
@@ -106,7 +107,7 @@ export function getTokenFromRequest(request: NextRequest): string | null {
 export async function verifyAdminRequest(request: NextRequest): Promise<boolean> {
   const token = getTokenFromRequest(request);
   if (!token) return false;
-  
+
   const payload = await verifyToken(token);
   return payload?.role === "admin";
 }
@@ -139,17 +140,17 @@ export async function generateParticipantToken(
   sessionId: string
 ): Promise<string> {
   const secret = getSecretKey();
-  
-  const token = await new SignJWT({ 
-    participantId, 
+
+  const token = await new SignJWT({
+    participantId,
     sessionCode,
-    sessionId 
+    sessionId
   })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(PARTICIPANT_TOKEN_EXPIRY)
     .sign(secret);
-  
+
   return token;
 }
 
@@ -160,11 +161,11 @@ export async function verifyParticipantToken(token: string): Promise<Participant
   try {
     const secret = getSecretKey();
     const { payload } = await jwtVerify(token, secret);
-    
+
     if (!payload.participantId || !payload.sessionCode || !payload.sessionId) {
       return null;
     }
-    
+
     return payload as ParticipantTokenPayload;
   } catch {
     return null;
@@ -176,7 +177,7 @@ export async function verifyParticipantToken(token: string): Promise<Participant
  */
 export async function setParticipantCookie(token: string): Promise<void> {
   const cookieStore = await cookies();
-  
+
   cookieStore.set(PARTICIPANT_COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -241,95 +242,10 @@ export function secureCompare(a: string, b: string): boolean {
     }
     return false;
   }
-  
+
   let result = 0;
   for (let i = 0; i < a.length; i++) {
     result |= a.charCodeAt(i) ^ b.charCodeAt(i);
   }
   return result === 0;
 }
-
-// ============================================
-// RATE LIMITER
-// ============================================
-
-type RateLimitConfig = {
-  maxAttempts: number;
-  windowMs: number;
-};
-
-type RateLimitRecord = { 
-  count: number; 
-  resetAt: number 
-};
-
-// Separate rate limit stores for different purposes
-const rateLimitStores = {
-  login: new Map<string, RateLimitRecord>(),
-  answer: new Map<string, RateLimitRecord>(),
-  join: new Map<string, RateLimitRecord>(),
-};
-
-const RATE_LIMIT_CONFIGS: Record<keyof typeof rateLimitStores, RateLimitConfig> = {
-  login: { maxAttempts: 5, windowMs: 15 * 60 * 1000 },     // 5 per 15 min
-  answer: { maxAttempts: 60, windowMs: 60 * 1000 },        // 60 per minute
-  join: { maxAttempts: 10, windowMs: 60 * 1000 },          // 10 per minute
-};
-
-function cleanupRateLimitStore(store: Map<string, RateLimitRecord>, now: number) {
-  if (store.size > 10000) {
-    for (const [key, value] of store.entries()) {
-      if (now > value.resetAt) {
-        store.delete(key);
-      }
-    }
-  }
-}
-
-/**
- * Generic rate limiter
- */
-export function checkRateLimit(
-  type: keyof typeof rateLimitStores,
-  identifier: string
-): { allowed: boolean; retryAfter?: number } {
-  const now = Date.now();
-  const store = rateLimitStores[type];
-  const config = RATE_LIMIT_CONFIGS[type];
-  
-  cleanupRateLimitStore(store, now);
-  
-  const record = store.get(identifier);
-  
-  if (!record || now > record.resetAt) {
-    store.set(identifier, { count: 1, resetAt: now + config.windowMs });
-    return { allowed: true };
-  }
-  
-  if (record.count >= config.maxAttempts) {
-    return { 
-      allowed: false, 
-      retryAfter: Math.ceil((record.resetAt - now) / 1000) 
-    };
-  }
-  
-  record.count++;
-  return { allowed: true };
-}
-
-/**
- * Reset rate limit
- */
-export function resetRateLimit(type: keyof typeof rateLimitStores, identifier: string): void {
-  rateLimitStores[type].delete(identifier);
-}
-
-// Legacy aliases for backward compatibility
-export function checkLoginRateLimit(ip: string) {
-  return checkRateLimit("login", ip);
-}
-
-export function resetLoginRateLimit(ip: string) {
-  resetRateLimit("login", ip);
-}
-

@@ -1,25 +1,28 @@
+
 import { NextRequest, NextResponse } from "next/server";
-import { 
-  generateAdminToken, 
-  setAuthCookie, 
+import {
+  generateAdminToken,
+  setAuthCookie,
   secureCompare,
-  checkLoginRateLimit,
-  resetLoginRateLimit 
 } from "@/lib/auth";
+import {
+  checkLoginRateLimit,
+  resetLoginRateLimit
+} from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
     // Get IP for rate limiting
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() 
-      || req.headers.get("x-real-ip") 
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+      || req.headers.get("x-real-ip")
       || "unknown";
-    
+
     // Check rate limit
-    const rateLimit = checkLoginRateLimit(ip);
+    const rateLimit = await checkLoginRateLimit(ip);
     if (!rateLimit.allowed) {
       return NextResponse.json(
-        { error: `Terlalu banyak percobaan. Coba lagi dalam ${rateLimit.retryAfter} detik.` },
-        { 
+        { error: `Terlalu banyak percobaan.Coba lagi dalam ${rateLimit.retryAfter} detik.` },
+        {
           status: 429,
           headers: {
             "Retry-After": String(rateLimit.retryAfter),
@@ -44,14 +47,14 @@ export async function POST(req: NextRequest) {
     // Use constant-time comparison to prevent timing attacks
     if (secureCompare(String(passcode || ""), CORRECT_PASSCODE)) {
       // Reset rate limit on successful login
-      resetLoginRateLimit(ip);
-      
+      await resetLoginRateLimit(ip);
+
       // Generate JWT token
       const token = await generateAdminToken();
-      
+
       // Set httpOnly cookie
       await setAuthCookie(token);
-      
+
       return NextResponse.json({ success: true });
     }
 
