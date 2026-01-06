@@ -322,7 +322,7 @@ export function SessionControl({
               )}
             </div>
 
-            <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col lg:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-full border border-slate-100">
                 <span
                   className={`relative flex h-3 w-3 ${endedAt ? "" : "animate-pulse"
@@ -344,25 +344,25 @@ export function SessionControl({
                 </span>
               </div>
 
-              <div className="flex gap-3 w-full sm:w-auto">
+              <div className="flex gap-3 w-full lg:w-auto">
                 {!endedAt ? (
                   <Button
                     variant="destructive"
                     onClick={onEndSession}
                     disabled={busy}
-                    className="flex-1 sm:flex-none rounded-full px-6 font-semibold shadow-lg shadow-red-100 hover:shadow-red-200 transition-all"
+                    className="flex-1 lg:flex-none rounded-full px-6 font-semibold shadow-lg shadow-red-100 hover:shadow-red-200 transition-all"
                   >
                     Akhiri Sesi
                   </Button>
                 ) : (
-                  <span className="flex-1 sm:flex-none px-6 py-2 bg-slate-100 rounded-full text-sm font-semibold text-slate-500 text-center">
+                  <span className="flex-1 lg:flex-none px-6 py-2 bg-slate-100 rounded-full text-sm font-semibold text-slate-500 text-center">
                     Sesi Selesai
                   </span>
                 )}
                 <Button
                   variant="outline"
                   onClick={onCloseSession}
-                  className="flex-1 sm:flex-none rounded-full px-6 font-medium border-slate-200 hover:bg-slate-50"
+                  className="flex-1 lg:flex-none rounded-full px-6 font-medium border-slate-200 hover:bg-slate-50"
                 >
                   Tutup
                 </Button>
